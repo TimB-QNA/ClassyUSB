@@ -30,3 +30,13 @@
 *.exe
 *.out
 *.app
+
+# Documentation
+*doxygen*
+*.out
+*.aux
+*.toc
+*.log
+*.brf
+*.blg
+*.bbl

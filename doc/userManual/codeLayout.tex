@@ -1,0 +1,27 @@
+\chapter{Code Layout}
+
+The code laid out such that it is easy to add functionalilty and hardware support. The code is split into a number of classes which handle the hardware interface and device functions.
+
+The main class is \emph{usbDev}. This handles all the device-level operations and manages the device functionality. \emph{usbDev} must be subclasssed to provide hardware support. The subclassed version is instantiated in the main program. The library treats every configuration as a composite device. In USB parlance, a composite device has multiple components which can have different functionality. The library follows the naming conventions of USB components, which provide functionality. Components can be added using the "addComponent()" member up to the available number of hardware endpoints.
+
+For example, serial over usb (CDC\_ACM) on an Atmel SAMD21 might be configured thus:
+
+\begin{verbatim}
+#include "ClassyUSB/src/hardware/samd21usbDevice.h"
+#include "ClassyUSB/src/CDC/usbCDC_ACM.h"
+
+samd21usbDevice usb;
+usbCDC_ACM acm;
+
+int main(){
+  ...
+  usb.setVendorID(0x03EB);
+  usb.setProductID(0x2404);
+
+  usb.initialise();
+  usb.addComponent( new usbCDC(&acm) );
+  ...
+}
+\end{verbatim}
+
+The device descriptors for these components is handled automatically by the library; the user need only set the vendor and product ID; refer to USB.org for advice regarding the selection of these IDs.

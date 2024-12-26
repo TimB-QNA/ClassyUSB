@@ -1,0 +1,101 @@
+\documentclass[11pt,twoside,a4paper]{report}
+
+%Include bibliography in table of contents
+\usepackage[nottoc,numbib]{tocbibind}
+\usepackage{graphicx}
+\usepackage{svg}
+\usepackage{float}
+\usepackage{amsmath} % Matrix rendering
+\usepackage{pgfplotstable} % Automatic tables
+\usepackage{longtable}
+
+% Custom commands
+%\newcommand{\userTitle}{XX-DOCUMENT-TITLE-XX}
+%\newcommand{\userAuthor}{XX-AUTHOR-XX}
+%\newcommand{\userDate}{\today}
+%\newcommand{\userSubject}{XX-SUBJECT-XX}
+%\newcommand{\userKeywords}{XX-KEYWORDS-XX}
+
+\newcommand{\clearemptydoublepage}{
+  \newpage{\pagestyle{empty}\cleardoublepage}
+}
+
+% Improve page geometry
+\usepackage{geometry}
+\geometry{
+  a4paper,
+  top=2cm,
+  bottom=2.5cm,
+  left=2.5cm,
+  right=2.5cm
+}
+%\usepackage{showframe}
+
+% Improve page style
+\usepackage{fancyhdr}
+\renewcommand{\headrulewidth}{0pt}
+
+\fancypagestyle{StandardPageStyle}{
+  \fancyhf{}
+  \fancyhead[RE,LO]{\leftmark}
+  \fancyfoot[RE,LO]{\userTitle}
+  \fancyfoot[LE,RO]{\thepage}
+}
+
+%Sort out chapter head page styles
+\fancypagestyle{title}{
+  \fancyhf{}
+  \fancyfoot[RE,LO]{}
+  \fancyfoot[LE,RO]{}
+}
+
+%Sort out chapter head page styles
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \fancyfoot[RE,LO]{\userTitle}
+  \fancyfoot[LE,RO]{\thepage}
+}
+
+%Sort out chapter blank page styles
+\fancypagestyle{empty}{
+  \fancyhf{}
+  \fancyfoot[RE,LO]{\userTitle}
+  \fancyfoot[LE,RO]{\thepage}
+}
+
+
+
+% PDF and hyperlink setup (required, but should be loaded last)
+\usepackage[pdftex,
+            pdfauthor=\userAuthor,
+            pdftitle=\userTitle,
+            pdfsubject=\userSubject,
+            pdfkeywords=\userKeywords,
+            pagebackref=true,
+            colorlinks=true,
+            linkcolor=black,
+            citecolor=black,
+            unicode]{hyperref}
+%Setup title/author etc...
+\title{\userTitle}
+\author{\userAuthor}
+
+\begin{document}
+\hypersetup{pageanchor=false,
+             bookmarksnumbered=true,
+             pdfencoding=unicode
+            }
+
+\input{\template/cover.tex}
+\thispagestyle{title}
+\cleardoublepage
+
+\pagestyle{StandardPageStyle}
+\tableofcontents
+\clearemptydoublepage
+
+%\input{chapter.tex}
+%\clearemptydoublepage
+%\bibliographystyle{plain}
+%\bibliography{library.bib}
+%\end{document}

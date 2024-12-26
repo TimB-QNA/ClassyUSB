@@ -1,0 +1,16 @@
+\chapter{Introduction}
+The most pertinent question when writing a new library is why. For USB devices this is very simple. Existing libraries are highly complex, appallingly documented, and require a PhD in software engineering to add or remove components. That's ignoring the fact that many are tied to vendors, and as such the bloat is appalling, as every device has to be supported. Great for quickly throwing some code together, as a proof of concept, rubbish for actually building kit which is maintainable. For professional work, I wouldn't use the Arduino libraries, it's a good introduction to microcontrollers but it's probably not the solution you're looking for long-term.
+
+This library attempts to fix some of those problems. There are always some tradeoffs, and its design favours ease of use over efficiency. Currently not many platforms are supported, but adding platform support is a matter of inheriting one class and writing the hardware support; everything else remains the same.
+
+\section{Supported Platforms}
+
+Only one platform is currently supported.
+
+\begin{longtable}{ c c c }
+Manufacturer & IC & Core Technology \\
+\endhead
+Atmel (Microchip) & SAMD21 & ARM Cortex M0 \\
+& & \\
+\caption{Supported microcontrollers}
+\end{longtable}
