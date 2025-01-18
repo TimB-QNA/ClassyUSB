@@ -37,6 +37,9 @@ class samd21usbDevice : public usbDev
     void     writeInZLP(uint8_t ep);
     void     writeInStall(uint8_t ep);
 
+    // Endpoint buffers
+    bool allocateEndpointBuffer(uint8_t **buffer, uint16_t bufferSize);
+	
   private:
     void configureClock();
     void configurePins();

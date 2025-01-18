@@ -46,8 +46,8 @@ void samd21usbDevice::interruptHandler(){
 
   for (i=0;i<nEndpoints;i++){
     if (USB->DEVICE.DeviceEndpoint[i].EPINTFLAG.bit.RXSTP==1){
-//      USB->DEVICE.DeviceEndpoint[i].EPSTATUSSET.bit.STALLRQ1=1;
       epList[i]->setupRecieved(hwEp[i].out.PCKSIZE.bit.BYTE_COUNT); // OUT (from host) transaction
+      USB->DEVICE.DeviceEndpoint[i].EPSTATUSCLR.bit.BK0RDY = 1;
 //      readComplete(i, 0);
     }
     USB->DEVICE.DeviceEndpoint[i].EPINTFLAG.reg=0xFF;
@@ -121,7 +121,7 @@ void samd21usbDevice::initialiseHardware(){
   while (USB->DEVICE.SYNCBUSY.bit.SWRST); /* Wait for reset */
 
   // Clear endpoint data...
-  memset((void*)hwEp, 0, sizeof(hwEp));
+  memset((uint8_t*)hwEp, 0, sizeof(hwEp));
   USB->DEVICE.DESCADD.reg=(uint32_t)hwEp;
    
   USB->DEVICE.CTRLA.bit.MODE   = 0; // USB Device
@@ -147,7 +147,7 @@ void samd21usbDevice::configureClock(){
   PM->APBBMASK.bit.USB_=1; // Enable APB Clock for USB
 //  PM->AHBMASK.bit.USB_=1;  // Enable AHB Clock for USB
 
-  GCLK->CLKCTRL.reg = GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN_GCLK0 | GCLK_CLKCTRL_ID(USB_GCLK_ID);
+  GCLK->CLKCTRL.reg = GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN(0) | GCLK_CLKCTRL_ID(USB_GCLK_ID);
   while (GCLK->STATUS.reg & GCLK_STATUS_SYNCBUSY);
 }
 
@@ -192,15 +192,17 @@ void samd21usbDevice::attach(){
 }
 
 void samd21usbDevice::hardwareExec(){
-//  if (USB->DEVICE.CTRLB.bit.DETACH==1) USB->DEVICE.CTRLB.bit.DETACH=0; // Attach to USB BUS
+  if (USB->DEVICE.CTRLB.bit.DETACH==1) USB->DEVICE.CTRLB.bit.DETACH=0; // Attach to USB BUS
   interruptHandler();
 }
 
 // Set device address on bus.
 void samd21usbDevice::setAddress(uint8_t addr){
-  USB->DEVICE.DADD.bit.ADDEN = 0x00;
-  USB->DEVICE.DADD.bit.DADD  = addr & 0x7F;
-  USB->DEVICE.DADD.bit.ADDEN = 1;
+//  USB->DEVICE.DADD.bit.ADDEN = 0x00;
+//  USB->DEVICE.DADD.bit.DADD  = addr & 0x7F;
+//  USB->DEVICE.DADD.bit.ADDEN = 1;
+  
+  USB->DEVICE.DADD.reg = USB_DEVICE_DADD_ADDEN | USB_DEVICE_DADD_DADD(addr);
 }
 
 void samd21usbDevice::setMode(usbModeTypes mode){
@@ -263,14 +265,15 @@ uint16_t samd21usbDevice::writeIn(uint8_t ep, uint16_t nBytes){
 
   USB->DEVICE.DeviceEndpoint[ep].EPINTFLAG.bit.TRCPT1=1;  // Clear Transfer complete flag
   USB->DEVICE.DeviceEndpoint[ep].EPINTFLAG.bit.TRFAIL1=1;  // Clear Transfer failure flag
-//  USB->DEVICE.DeviceEndpoint[ep].EPSTATUSCLR.bit.STALLRQ1=1;
+  USB->DEVICE.DeviceEndpoint[ep].EPSTATUSCLR.bit.STALLRQ1=1;
   USB->DEVICE.DeviceEndpoint[ep].EPSTATUSSET.bit.BK1RDY=1;
 
   /* Wait for transfer to complete */
   while (USB->DEVICE.DeviceEndpoint[ep].EPINTFLAG.bit.TRCPT1==0 && USB->DEVICE.DeviceEndpoint[ep].EPINTFLAG.bit.TRFAIL1==0)
   {
   }
-  return nBytes;
+  if (USB->DEVICE.DeviceEndpoint[ep].EPINTFLAG.bit.TRCPT1==1)  return nBytes;
+  return 0;
 }
 
 void samd21usbDevice::writeInZLP(uint8_t ep){
@@ -279,4 +282,10 @@ void samd21usbDevice::writeInZLP(uint8_t ep){
 
 void samd21usbDevice::writeInStall(uint8_t ep){
   USB->DEVICE.DeviceEndpoint[ep].EPSTATUSSET.bit.STALLRQ1=1;
+}
+
+bool samd21usbDevice::allocateEndpointBuffer(uint8_t **buffer, uint16_t bufferSize){
+  *buffer = new uint8_t[bufferSize];
+  memset(*buffer, 0, bufferSize);	
+  return true;
 }
