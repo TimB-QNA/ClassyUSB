@@ -16,6 +16,16 @@ usbComponent::usbComponent(uint8_t classCode, uint8_t classControlProtocol, usbC
   usb_ifaceDesc.bNumEndpoints=0;
 }
 
+void usbComponent::initialise(usbDev *usbHardware){
+  uint8_t i;
+  for (i=0;i<m_nEp;i++){
+	m_ep[i]->setHardware(usbHardware);
+	m_ep[i]->initialise();
+  }
+  
+  if (m_subclass!=nullptr) m_subclass->initialise(usbHardware);
+}
+
 void usbComponent::updateInterfaceDescriptor(){
 // Don't update anything by default
 }

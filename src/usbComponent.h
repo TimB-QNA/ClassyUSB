@@ -28,6 +28,7 @@ class usbComponent{
 
   public:
     usbComponent(uint8_t classCode=0, uint8_t classControlProtocol=0, usbComponent *subclass=nullptr, const char *name=nullptr);
+	void initialise(usbDev *usbHardware);
     uint8_t endpoints();
     virtual void exec();
     

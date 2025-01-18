@@ -31,6 +31,7 @@ class usbEndpoint
 
     usbEndpoint(uint16_t bufferSz, usbEndpoint::endpointSize sz, usbEndpoint::endpointDirection uDir, usbEndpoint::endpointType uType);
     void setHardware(usbDev *hw);
+	void initialise();
     void setHardwareEndpoint(uint8_t hardwareEndpoint);
     uint8_t hardwareEndpoint();
 
@@ -39,8 +40,8 @@ class usbEndpoint
     usbEndpoint::endpointDirection  dir;
     usbEndpoint::endpointType       type;
     uint16_t                        bufferSize;
-    alignas(4) uint8_t              *inBuffer;    // 32bit alignment required for SAMD21
-    alignas(4) uint8_t              *outBuffer;
+    uint8_t*                        inBuffer;
+    uint8_t*                        outBuffer;
     usbDev                          *usbHardware;
 
   // Data Handler routines

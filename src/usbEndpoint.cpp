@@ -9,13 +9,21 @@ usbEndpoint::usbEndpoint(uint16_t bufferSz, usbEndpoint::endpointSize sz, usbEnd
   type=uType;
   
   usbHardware=nullptr;
+  inBuffer=nullptr;
+  outBuffer=nullptr;
+}
 
-  inBuffer  = new uint8_t[bufferSize];
-  outBuffer = new uint8_t[bufferSize];
-  memset(inBuffer, 0, bufferSize);
-  memset(outBuffer, 0, bufferSize);
+void usbEndpoint::setHardware(usbDev *hw){
+	usbHardware=hw;
+}
+
+void usbEndpoint::initialise(){
+  if (usbHardware==nullptr) return;
+
+  if (dir==usbEndpoint::endpointDirection::in  || type==usbEndpoint::endpointType::control || type==usbEndpoint::endpointType::dual) usbHardware->allocateEndpointBuffer(&inBuffer, bufferSize);
+  if (dir==usbEndpoint::endpointDirection::out || type==usbEndpoint::endpointType::control || type==usbEndpoint::endpointType::dual) usbHardware->allocateEndpointBuffer(&outBuffer, bufferSize);
   
-  descriptor.bLength          = 7;                            // Size of descriptor (always 9)
+  descriptor.bLength          = 7;                                     // Size of descriptor (always 9)
   descriptor.bDescriptorType  = (uint8_t)usbDescriptorTypes::endpoint; // Interface descriptor Type  - USB Standard page 251
 
   descriptor.bEndpointAddress=0x0F;
@@ -48,10 +56,6 @@ usbEndpoint::usbEndpoint(uint16_t bufferSz, usbEndpoint::endpointSize sz, usbEnd
 
   descriptor.wMaxPacketSize   = (uint16_t)size & 0x07FF;        // Maximum packet size
   descriptor.bInterval        = 10;                             // Interval between packets
-}
-
-void usbEndpoint::setHardware(usbDev *hw){
-  usbHardware=hw;
 }
 
 void usbEndpoint::setHardwareEndpoint(uint8_t hardwareEndpoint){
