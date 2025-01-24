@@ -13,7 +13,7 @@
 #define SAMD21USBDEVICE_H_
 #include <stdalign.h>
 #include <sam.h>
-#include "../../usbDev.h"
+#include "../../core/usbDev.h"
 
 extern "C" void USB_Handler();
 

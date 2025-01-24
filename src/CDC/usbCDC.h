@@ -10,8 +10,8 @@
 #define USBCDC_H_
 
 #include <stdint.h>
-#include "../usbComponent.h"
-#include "../usbSubComponent.h"
+#include "../core/usbComponent.h"
+#include "../core/usbSubComponent.h"
 
 /*! The usbSubCDC class is just a wrapper around usbSubComponent.
  *  It restricts which object types can be compiled into a USB
