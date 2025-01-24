@@ -30,7 +30,8 @@
 class usbDev
 {
   friend class usbEndpoint;
-
+  friend class usbComponent;
+  
   private:
     class deviceEndpoint : public usbEndpoint{
       public:
@@ -42,7 +43,6 @@ class usbDev
         deviceEndpoint();
         void dataRecieved(uint16_t nBytes);
         void setupRecieved(uint16_t nBytes);
-        usbDev *parent;
     };
 
     friend class deviceEndpoint;
@@ -152,17 +152,17 @@ class usbDev
     uint8_t nInterfaces;
     uint8_t nComponents;
     usbComponent *ud_component[USB_MAX_COMPONENTS];
+
+    uint8_t  m_iConfiguration;
    
     bool addComponentEndpoints(usbComponent *component);
+	bool addComponentEndpoints(usbSubComponent *component);
     bool addEndpoint(usbEndpoint *ep);
-
-    usbEndpoint* componentEP(usbComponent *component, uint8_t idx);
-    uint8_t componentEPs(usbComponent *component);
 
     void    populateDescriptor();
     void    configDescriptor(uint8_t *buffer, uint16_t *len);
     uint8_t addStringDescriptor(const char *desc);
-     
+
   public:
     virtual void attach()=0;
 
@@ -173,6 +173,9 @@ class usbDev
     virtual void setMode(usbModeTypes mode)=0;
     virtual bool addEndpointToHardware(uint8_t idx, usbEndpoint *ep)=0;
 
+    // Endpoint buffers
+	virtual bool allocateEndpointBuffer(uint8_t **buffer, uint16_t bufferSize)=0;
+	
     // Hardware Comms Routines
     virtual uint16_t writeIn(uint8_t ep, uint16_t nBytes)=0;
     virtual void     writeInZLP(uint8_t ep)=0;

@@ -8,14 +8,11 @@ usbDev::usbDev(){
   ud_vid=0x0000;
   ud_pid=0x0000;
   ud_rel=0x0000;
-  ud_control.parent=this;
   ud_maxPower=1;
   ud_powerCfg=usbPowerConfig::BusPowered;
   
   // Default descriptor has no strings.
-  ud_descriptor.iManufacturer = 0;
-  ud_descriptor.iProduct      = 0;
-  ud_descriptor.iSerialNumber = 0;
+  m_iConfiguration=0;
 
   // Language descriptor
   ud_languageList.bLength=4;
@@ -34,22 +31,24 @@ usbDev::usbDev(){
   populateDescriptor();
 }
 
-void usbDev::initialise(){
+void usbDev::initialise(){  
   initialiseHardware();
   // Configure Endpoint 0 as control interface...
+  ud_control.setHardware(this);
+  ud_control.initialise();
   addEndpoint(&ud_control);
 }
 
 void usbDev::setVendorID(uint16_t id){
-  ud_vid=id;
+  ud_descriptor.idVendor = id;
 }
 
 void usbDev::setProductID(uint16_t id){
-  ud_pid=id;
+  ud_descriptor.idProduct = id;
 }
 
 void usbDev::setProductVersion(uint8_t major, uint8_t minor, uint8_t fix){
-  ud_rel=major<<8 | ((minor & 0x0F) << 4) | (fix & 0x0F);
+  ud_descriptor.bcdDevice = major<<8 | ((minor & 0x0F) << 4) | (fix & 0x0F);
 }
 
 void usbDev::setVendorString (const char *desc){
@@ -65,7 +64,7 @@ void usbDev::setSerialNumberString(const char *desc){
 }
 
 void usbDev::setConfigurationString(const char *desc){
-  ud_descriptor.iSerialNumber = addStringDescriptor(desc);
+  m_iConfiguration = addStringDescriptor(desc);
 }
 
 bool usbDev::addComponent(usbComponent *component){
@@ -75,24 +74,14 @@ bool usbDev::addComponent(usbComponent *component){
   ud_component[nComponents]=component;
   nInterfaces=ud_component[nComponents]->assignInterfaceNumbers(nInterfaces);
 
-  if (component->m_componentName!=nullptr){
-    component->usb_ifaceDesc.iInterface=addStringDescriptor(component->m_componentName);
-  }
-
-  if (component->m_subclass!=nullptr){
-    if (component->m_subclass->m_componentName!=nullptr){
-      component->m_subclass->usb_ifaceDesc.iInterface=addStringDescriptor(component->m_subclass->m_componentName);
-    }
-  }
-
   nComponents++;
-  populateDescriptor();
   
   if (!addComponentEndpoints(component)) return false;
-
   if (component->m_subclass!=nullptr){
-    if (!addComponentEndpoints(component->m_subclass)) return false;
+	if (!addComponentEndpoints(component->m_subclass)) return false;
   }
+  
+  component->initialise(this);
 
   return true;
 }
@@ -100,8 +89,18 @@ bool usbDev::addComponent(usbComponent *component){
 bool usbDev::addComponentEndpoints(usbComponent *component){
   uint8_t i;
 
-  for (i=0;i<component->endpoints();i++){
-    if (!addEndpoint(componentEP(component, i))) return false;
+  for (i=0;i<component->m_nEp;i++){
+    if (!addEndpoint(component->m_ep[i])) return false;
+  }
+
+  return true;
+}
+
+bool usbDev::addComponentEndpoints(usbSubComponent *component){
+  uint8_t i;
+
+  for (i=0;i<component->m_nEp;i++){
+	if (!addEndpoint(component->m_ep[i])) return false;
   }
 
   return true;
@@ -120,14 +119,6 @@ bool usbDev::addEndpoint(usbEndpoint *ep){
   return true;
 }
 
-usbEndpoint* usbDev::componentEP(usbComponent *component, uint8_t idx){
-  return component->m_ep[idx];
-}
-
-uint8_t usbDev::componentEPs(usbComponent *component){
-  return component->m_nEp;
-}
-
 void usbDev::exec(){
   uint8_t i;
 
@@ -144,12 +135,12 @@ void usbDev::populateDescriptor(){
   ud_descriptor.bDeviceSubClass    = 0x00;  // See device class
   ud_descriptor.bDeviceProtocol    = 0x00;  // See device class
   ud_descriptor.bMaxPacketSize0    = 64;    // Must be 64 for high-speed
-  ud_descriptor.idVendor           = ud_vid;       // Default only
-  ud_descriptor.idProduct          = ud_pid;      // Default only
-  ud_descriptor.bcdDevice          = ud_rel;  // Device release number (default 0)
-  ud_descriptor.iManufacturer      = 0;       // No manufacturer string by default
-  ud_descriptor.iProduct           = 0;            // No product string by default
-  ud_descriptor.iSerialNumber      = 0;       // No serial number string by default
+  ud_descriptor.idVendor           = 0;     // Default only
+  ud_descriptor.idProduct          = 0;     // Default only
+  ud_descriptor.bcdDevice          = 0;     // Device release number (default 0)
+  ud_descriptor.iManufacturer      = 0;     // No manufacturer string by default
+  ud_descriptor.iProduct           = 0;     // No product string by default
+  ud_descriptor.iSerialNumber      = 0;     // No serial number string by default
 //  if (ud_stringDescriptors[0].hasString()) ud_descriptor.iManufacturer = 1;
 //  if (ud_stringDescriptors[1].hasString()) ud_descriptor.iProduct      = 2;
 //  if (ud_stringDescriptors[2].hasString()) ud_descriptor.iSerialNumber = 3;
@@ -182,8 +173,7 @@ void usbDev::configDescriptor(uint8_t *buffer, uint16_t *len){
   cfg.wTotalLength          = offset;  // offset is incremented per component, so we know the total number of bytes.
   cfg.bNumInterfaces        = nInterfaces;
   cfg.bConfigurationValue   = 1; //  Only ever one configuration at present, 1 just used as non-zero identifier.
-  cfg.iConfiguration        = 0; //  Configuration string (none)
- // if (ud_stringDescriptors[3].hasString()) cfg.iConfiguration = 4;
+  cfg.iConfiguration        = m_iConfiguration; //  Configuration string (none as default)
   cfg.bmAttributes          = (uint8_t)ud_powerCfg | 0x80;
   cfg.bMaxPower             = ud_maxPower;
 
@@ -237,7 +227,7 @@ bool usbDev::stringDescriptor::hasString(){
 
 
 
-usbDev::deviceEndpoint::deviceEndpoint() : usbEndpoint(64, usbEndpoint::endpointSize::b64, usbEndpoint::endpointDirection::in, usbEndpoint::endpointType::control)
+usbDev::deviceEndpoint::deviceEndpoint() : usbEndpoint(512, usbEndpoint::endpointSize::b64, usbEndpoint::endpointDirection::both, usbEndpoint::endpointType::control)
 {
 
 }
@@ -250,11 +240,12 @@ void usbDev::deviceEndpoint::dataRecieved(uint16_t nBytes){
 #pragma GCC optimize ("O0")
 void usbDev::deviceEndpoint::setupRecieved(uint16_t nBytes){
   uint8_t tmp=0;
-  uint8_t descBuffer[256];
+  uint8_t descBuffer[512];
   uint16_t descLen;
 
   uint8_t dbgTxn[64];
-  memcpy(dbgTxn, (void*)outBuffer, 64);
+  memset(dbgTxn, 0, 64);
+  memcpy(dbgTxn, (void*)outBuffer, nBytes);
 
   usbSetupPacket setup(outBuffer);
   
@@ -263,27 +254,27 @@ void usbDev::deviceEndpoint::setupRecieved(uint16_t nBytes){
   switch (setup.request){
     case usbStandardRequestCode::setAddress:
       writeInZLP();
-      parent->setAddress(setup.wValue);
+      usbHardware->setAddress(setup.wValue);
       break;
 
     case usbStandardRequestCode::getDescriptor:
       if (setup.descriptor==usbDescriptorTypes::device){
-        writeIn((uint8_t*)&parent->ud_descriptor, parent->ud_descriptor.bLength, setup.wLength);
+        writeIn((uint8_t*)&usbHardware->ud_descriptor, usbHardware->ud_descriptor.bLength, setup.wLength);
       }
       if (setup.descriptor==usbDescriptorTypes::configuration){
         descLen=0;
-        parent->configDescriptor(descBuffer, &descLen);
+        usbHardware->configDescriptor(descBuffer, &descLen);
         writeIn(descBuffer, descLen, setup.wLength);
       }
       if (setup.descriptor==usbDescriptorTypes::deviceQualifier){
-        writeIn((uint8_t*)&parent->ud_qualifier, parent->ud_qualifier.bLength, setup.wLength);
+        writeIn((uint8_t*)&usbHardware->ud_qualifier, usbHardware->ud_qualifier.bLength, setup.wLength);
       }
       if (setup.descriptor==usbDescriptorTypes::string){
         descLen=0;
         if (setup.descriptorIndex==0){
-          writeIn((uint8_t*)&parent->ud_languageList, parent->ud_languageList.bLength, setup.wLength);
+          writeIn((uint8_t*)&usbHardware->ud_languageList, usbHardware->ud_languageList.bLength, setup.wLength);
         }else{
-          parent->ud_stringDescriptors[setup.descriptorIndex-1].writeDescriptor(descBuffer, &descLen);
+          usbHardware->ud_stringDescriptors[setup.descriptorIndex-1].writeDescriptor(descBuffer, &descLen);
           writeIn(descBuffer, descLen, setup.wLength);
         }
       }
@@ -291,29 +282,29 @@ void usbDev::deviceEndpoint::setupRecieved(uint16_t nBytes){
 
     case usbStandardRequestCode::setConfiguration:
       if (setup.wValue==1){
-//        parent->sendData(this, &tmp, 0);
+        writeInZLP();
       }else{
-//        parent->sendRequestError(this);
+        writeInStall();
       }
       break;
 
     case usbStandardRequestCode::setFeature:
     // USB Specification 2.0 Page 259
       if (setup.bmRequestType==0){ // TEST_MODE feature is only one valid for USB Device
-        if ((setup.wIndex >> 8) == 0x01) parent->setMode(usbModeTypes::TestModeJ);
-        if ((setup.wIndex >> 8) == 0x02) parent->setMode(usbModeTypes::TestModeK);
-        if ((setup.wIndex >> 8) == 0x03) parent->setMode(usbModeTypes::TestModeNAK);
-        if ((setup.wIndex >> 8) == 0x04) parent->setMode(usbModeTypes::TestModePacket);
+        if ((setup.wIndex >> 8) == 0x01) usbHardware->setMode(usbModeTypes::TestModeJ);
+        if ((setup.wIndex >> 8) == 0x02) usbHardware->setMode(usbModeTypes::TestModeK);
+        if ((setup.wIndex >> 8) == 0x03) usbHardware->setMode(usbModeTypes::TestModeNAK);
+        if ((setup.wIndex >> 8) == 0x04) usbHardware->setMode(usbModeTypes::TestModePacket);
 //        if ((setup.wIndex >> 8) == 0x05) setMode(usbModeTypes::TestModeJ);
       }
       break;
     case usbStandardRequestCode::clearFeature:
     // USB Specification 2.0 Page 259
     if (setup.bmRequestType==0){ // TEST_MODE feature is only one valid for USB Device
-      if ((setup.wIndex >> 8) == 0x01) parent->setMode(usbModeTypes::TestModeJ);
-      if ((setup.wIndex >> 8) == 0x02) parent->setMode(usbModeTypes::TestModeK);
-      if ((setup.wIndex >> 8) == 0x03) parent->setMode(usbModeTypes::TestModeNAK);
-      if ((setup.wIndex >> 8) == 0x04) parent->setMode(usbModeTypes::TestModePacket);
+      if ((setup.wIndex >> 8) == 0x01) usbHardware->setMode(usbModeTypes::TestModeJ);
+      if ((setup.wIndex >> 8) == 0x02) usbHardware->setMode(usbModeTypes::TestModeK);
+      if ((setup.wIndex >> 8) == 0x03) usbHardware->setMode(usbModeTypes::TestModeNAK);
+      if ((setup.wIndex >> 8) == 0x04) usbHardware->setMode(usbModeTypes::TestModePacket);
       //        if ((setup.wIndex >> 8) == 0x05) setMode(usbModeTypes::TestModeJ);
     }
     break;
