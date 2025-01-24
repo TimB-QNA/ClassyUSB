@@ -2,12 +2,16 @@
 #include "usbCDC.h"
 #include <string.h>
 
-usbCDC_ACM::usbCDC_ACM() : usbComponent()
+usbCDC_ACM::usbCDC_ACM() : usbSubCDC(0x02, 0x00) // Abstract Control Model, no protocol required
 {
   dInEp  = new usbCDC_ACM::cdcAcmEndpoint(this, 128, usbEndpoint::endpointSize::b64, usbEndpoint::endpointDirection::in,  usbEndpoint::endpointType::bulk);
   dOutEp = new usbCDC_ACM::cdcAcmEndpoint(this, 128, usbEndpoint::endpointSize::b64, usbEndpoint::endpointDirection::out,  usbEndpoint::endpointType::bulk);
   assignEndpoint(dInEp);
   assignEndpoint(dOutEp);
+  
+  sub_ifaceDesc.bInterfaceClass    = 0x0A;
+  sub_ifaceDesc.bInterfaceSubClass = 0;
+  sub_ifaceDesc.bInterfaceProtocol = 0;
   
   acm_mgtDesc.bFunctionLength=4;
 //  acm_mgtDesc.bDescriptorType=;
@@ -15,6 +19,9 @@ usbCDC_ACM::usbCDC_ACM() : usbComponent()
   acm_mgtDesc.bmCapabilities=0x06;
 }
 
+void usbCDC_ACM::initComponent(){
+}
+	
 usbCDC_ACM::cdcAcmEndpoint::cdcAcmEndpoint(usbCDC_ACM *p, uint16_t bSize, usbEndpoint::endpointSize sz, usbEndpoint::endpointDirection uDir, usbEndpoint::endpointType uType) : usbEndpoint(bSize, sz,uDir,uType){
   parent=p;
 }
@@ -22,14 +29,6 @@ usbCDC_ACM::cdcAcmEndpoint::cdcAcmEndpoint(usbCDC_ACM *p, uint16_t bSize, usbEnd
 void usbCDC_ACM::cdcAcmEndpoint::dataRecieved(uint16_t nBytes){
   // Handle Received data
 
-}
-
-void usbCDC_ACM::updateInterfaceDescriptor(){
-  usb_ifaceDesc.bInterfaceClass=10;
-}
-
-uint8_t usbCDC_ACM::subclassCode(){
-  return 2;
 }
 
 void usbCDC_ACM::bufferFunctionalDescriptor(uint8_t *buffer, uint16_t *len){

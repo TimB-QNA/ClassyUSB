@@ -11,9 +11,24 @@
 
 #include <stdint.h>
 #include "../usbComponent.h"
+#include "../usbSubComponent.h"
+
+/*! The usbSubCDC class is just a wrapper around usbSubComponent.
+ *  It restricts which object types can be compiled into a USB
+ *  Component without a compiler error.
+ */
+class usbSubCDC : public usbSubComponent
+{
+  public:
+    usbSubCDC(uint8_t subclassCode=0x00, uint8_t protocolCode=0x00);
+};
 
 class usbCDC : public usbComponent
 {
+  private:
+	enum class descriptorTypes         : uint16_t { interface=0x24, endpoint=0x25 };
+	enum class descriptorSubTypes      : uint16_t { headerFunctionalDescriptor=0x00, callManagement=0x02 };
+		
   private:
     class cdcEndpoint : public usbEndpoint{
       public:
@@ -27,39 +42,14 @@ class usbCDC : public usbComponent
     friend class cdcAcmEndpoint;
 
   public:
-    typedef struct{
-      uint8_t  bFunctionLength;
-      uint8_t  bDescriptorType;
-      uint8_t  bDescriptorSubtype;
-      uint16_t bcdCDC;
-    }headerDescriptor;
-
-    typedef struct{
-      uint8_t  bFunctionLength;
-      uint8_t  bDescriptorType;
-      uint8_t  bDescriptorSubtype;
-      uint8_t  bControlInterface;
-      uint8_t  bSubordinateInterface0;
-      uint8_t  bInterfaceClass;
-      uint8_t  bInterfaceSubClass;
-      uint8_t  bInterfaceProtocol;
-    }functionalDescriptor;
-
-    typedef struct{
-      uint8_t  bFunctionLength;
-      uint8_t  bDescriptorType;
-      uint8_t  bDescriptorSubtype;
-      uint8_t  bmCapabilities;
-      uint8_t  bDataInterface;
-    }capabilityDescriptor;
-
-    usbCDC(usbComponent *subclass, const char* name="CDC");
+    usbCDC(usbSubCDC *subclass, const char* name="CDC");
 
   protected:
-    headerDescriptor     cdc_hdrDesc;
-    functionalDescriptor cdc_fncDesc;
+    usbComponent::headerDescriptor      cdc_hdrDesc;
+    usbComponent::functionalDescriptor  cdc_fncDesc;
+    usbEndpoint                        *ctrlEndpoint;
 
-    usbEndpoint *ctrlEndpoint;
+    void initComponent();
 
     void bufferFunctionalDescriptor(uint8_t *buffer, uint16_t *len);
 };

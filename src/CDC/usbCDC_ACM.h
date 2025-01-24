@@ -5,16 +5,15 @@
  *  Author: Tim
  */ 
 
-#include "../usbComponent.h"
 #include "usbCDC.h"
 
 #ifndef USBCDC_ACM_H_
 #define USBCDC_ACM_H_
 
-class usbCDC_ACM : public usbComponent
+class usbCDC_ACM : public usbSubCDC
 {
   friend class usbCDC;
-
+  
   private:
     class cdcAcmEndpoint : public usbEndpoint{
       public:
@@ -38,14 +37,12 @@ class usbCDC_ACM : public usbComponent
     usbCDC_ACM();
 
   protected:
+    void initComponent();
     managementDescriptor acm_mgtDesc;
 
     usbCDC_ACM::cdcAcmEndpoint *dInEp;
     usbCDC_ACM::cdcAcmEndpoint *dOutEp;
 
-  public:
-    void updateInterfaceDescriptor();
-    uint8_t subclassCode();
     void bufferFunctionalDescriptor(uint8_t *buffer, uint16_t *len);
 
 };
