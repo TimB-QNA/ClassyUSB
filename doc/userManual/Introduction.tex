@@ -13,4 +13,41 @@ Manufacturer & IC & Core Technology \\
 Atmel (Microchip) & SAMD21 & ARM Cortex M0 \\
 & & \\
 \caption{Supported microcontrollers}
+\label{table:supportedMicrocontrollers}
 \end{longtable}
+
+\section{Limitations}
+There as some limitations with the way this library is built. In most cases they will be minor.
+
+\subsection{Devices are composite.}
+This isn't a major limitation, but it's something to be aware of as it means that the descriptors tend to be longer, and therefore more memory is required for the primary endpoint.
+
+\subsection{Hardware has limits}
+Microcontrollers have a limited number of endpoints, often arranged as endpoint pairs. At present the code does not try to use these pairs intelligently, so you only get half the endpoints you would expect. This will limit the number of components you can have.
+
+This will be addressed at some point in the future.
+
+\subsection{Definitions for code tuning}
+The code can be tuned by means of the definitions below. This is a self-imposed limitation, but the ability to tune the memory usage may be very helpful.
+
+\begin{itemize}
+  \item USB\_MAX\_COMPONENT\_ENDPOINTS
+    \subitem Default 3
+    \subitem Maximum number of endpoints allowed in and component or subcomponent.
+
+  \item PLATFORM\_ENDIAN
+    \subitem Default 0
+    \subitem Platform endian. Little (0) or Big (1). No conversion is carried out if the platform endian matches USB.
+
+  \item USB\_MAX\_COMPONENTS
+    \subitem Default 3
+    \subitem Maximum number of components in the device. Can be reduced to save memory.
+
+  \item USB\_MAX\_ENDPOINTS
+    \subitem Default 8
+    \subitem Maximum number of endpoints handled. Can be reduced to save memory, may need to be increased for complex devices.
+
+  \item USB\_MAX\_STRINGDESCRIPTORS
+    \subitem Default 8
+    \subitem Number of available string descriptors. Strings can use memory quickly so limit this where possible.
+\end{itemize}
