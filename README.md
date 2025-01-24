@@ -13,7 +13,7 @@ This document is a brief introduction to allow you to use the library quickly an
 
 ## Using this library
 
-Clone this repository (or, ideally, add it as a sumbodule) into your project. Add the contents of ClassyUSB/src in your project, then remove anything you don't need.
+Clone this repository (or, ideally, add it as a sumbodule) into your project. Add the contents of ClassyUSB/src in your project, then remove anything you don't need. You will need the core folder, a hardware implementation (one of the sub-folders of "hardware") and a class/subclass for functionality (e.g.CDC and CDC_ACM).
 
 In your main program, include the header for the microcontroller you're using and create an instance of the usb device...
 
