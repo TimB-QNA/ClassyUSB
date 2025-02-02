@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 #include "usbEndpoint.h"
-
+#include "packets/usbSetupPacket.h"
 class usbDev;
 class usbSubComponent;
 
@@ -34,25 +34,6 @@ class usbComponent{
     uint8_t  bDescriptorSubtype;
     uint16_t bcdCDC;
   }headerDescriptor;
-
-  typedef struct{
-    uint8_t  bFunctionLength;
-    uint8_t  bDescriptorType;
-    uint8_t  bDescriptorSubtype;
-    uint8_t  bControlInterface;
-    uint8_t  bSubordinateInterface0;
-    uint8_t  bInterfaceClass;
-    uint8_t  bInterfaceSubClass;
-    uint8_t  bInterfaceProtocol;
-  }functionalDescriptor;
-
-  typedef struct{
-    uint8_t  bFunctionLength;
-    uint8_t  bDescriptorType;
-    uint8_t  bDescriptorSubtype;
-    uint8_t  bmCapabilities;
-    uint8_t  bDataInterface;
-  }capabilityDescriptor;
 	
   public:
     usbComponent(usbSubComponent *subclass=nullptr, uint8_t classCode=0x00, uint8_t subclassCode=0x00, uint8_t protocolCode=0x00, const char *name=nullptr);
@@ -66,7 +47,7 @@ class usbComponent{
   protected:
     const char* m_componentName;
     uint8_t m_cmpNameIdx;
-    usbSubComponent *m_subclass;
+    usbSubComponent *m_subclass=nullptr;
 	
     usbComponent::interfaceDescriptor usb_ifaceDesc;
 	
@@ -78,7 +59,11 @@ class usbComponent{
 
     virtual void initComponent()=0;
     void bufferInterfaceDescriptor(uint8_t *buffer, uint16_t *len);
-    virtual void bufferFunctionalDescriptor(uint8_t *buffer, uint16_t *len)=0;
+	virtual void bufferSupplementalInterfaceDescriptor(uint8_t *buffer, uint16_t *len);
+    virtual void bufferFunctionalDescriptor(uint8_t *buffer, uint16_t *len);
+	
+	void usbClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt);
+	virtual void handleClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt);
 };
 
 #include "usbDev.h"

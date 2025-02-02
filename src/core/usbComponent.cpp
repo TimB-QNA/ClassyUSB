@@ -27,13 +27,13 @@ void usbComponent::initialise(usbDev *usbHardware){
   usb_ifaceDesc.iInterface=usbHardware->addStringDescriptor(m_componentName);
   
   initComponent();
-  m_subclass->initialise(this);
+ if (m_subclass!=nullptr) m_subclass->initialise(this);
 
   for (i=0;i<m_nEp;i++){
 	m_ep[i]->setHardware(usbHardware);
 	m_ep[i]->initialise();
   }
-  
+
   if (m_subclass!=nullptr){
     for (i=0;i<m_subclass->m_nEp;i++){ 
       m_subclass->m_ep[i]->setHardware(usbHardware);
@@ -102,17 +102,24 @@ void usbComponent::bufferInterfaceDescriptor(uint8_t *buffer, uint16_t *len){
   
   // Copy interface and endpoint descriptor to buffer.
   memcpy(buffer+*len, &usb_ifaceDesc, usb_ifaceDesc.bLength); *len+=usb_ifaceDesc.bLength;
-
-  bufferFunctionalDescriptor(buffer, len);
-  
+  bufferSupplementalInterfaceDescriptor(buffer, len);
+     
   for (i=0;i<m_nEp;i++){
 	memcpy(buffer+*len, &(m_ep[i]->descriptor), m_ep[i]->descriptor.bLength);
 	*len+=m_ep[i]->descriptor.bLength;
   }
-
+  bufferFunctionalDescriptor(buffer, len);
+  
   if (m_subclass!=nullptr) m_subclass->bufferInterfaceDescriptor(buffer, len);
+  if (m_subclass!=nullptr) bufferFunctionalDescriptor(buffer, len);
 }
 
+void usbComponent::bufferSupplementalInterfaceDescriptor(uint8_t *buffer, uint16_t *len){
+}
+
+void usbComponent::bufferFunctionalDescriptor(uint8_t *buffer, uint16_t *len){
+}
+	
 bool usbComponent::assignEndpoint(usbEndpoint *ep){
   if (m_nEp==USB_MAX_COMPONENT_ENDPOINTS) return false;
 
@@ -152,4 +159,16 @@ uint8_t usbComponent::assignInterfaceNumbers(uint8_t start){
   }
   
   return n;
+}
+
+/*!
+ * Setup packets received here (which come from the main device control pipe)
+ * are \emph{always} of type "Class"
+ */
+void usbComponent::usbClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt){
+  if (pkt.rec==usbSetupPacket::rqRecipient::interface);
+  handleClassRequest(replyEp, pkt);
+}
+
+void usbComponent::handleClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt){
 }
