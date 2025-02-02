@@ -14,8 +14,7 @@ enum class usbStandardRequestCode     : uint8_t { getStatus=0,        clearFeatu
                                                   getConfiguration=8, setConfiguration=9, getInterface=10, setInterface=11, synchFrame=12 };
 
 enum class usbDescriptorTypes         : uint16_t { invalid=0, device=1, configuration=2, string=3, interface=4, endpoint=5, deviceQualifier=6, 
-                                                   otherSpeedConfiguration=7, interfacePower=8, hubDescriptor=0x29,  // USB 2 Standard page 251, Table 9-5
-                                                   cs_interface=0x24, cs_endpoint=0x25 }; // CDC120 doc page 17
+                                                   otherSpeedConfiguration=7, interfacePower=8, hubDescriptor=0x29 };  // USB 2 Standard page 251, Table 9-5
 
 enum class usbModeTypes               : uint16_t { None=0, LowSpeed, HighSpeed, FullSpeed, TestModeHighSpeed, TestModeNAK, TestModeJ, TestModeK, TestModePacket, Device, Host };
 
