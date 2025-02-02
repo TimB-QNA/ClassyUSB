@@ -234,6 +234,7 @@ usbDev::deviceEndpoint::deviceEndpoint() : usbEndpoint(512, usbEndpoint::endpoin
 
 void usbDev::deviceEndpoint::dataRecieved(uint16_t nBytes){
   // Handle Received data
+  return;
 }
 
 #pragma GCC push_options
@@ -250,6 +251,13 @@ void usbDev::deviceEndpoint::setupRecieved(uint16_t nBytes){
   usbSetupPacket setup(outBuffer);
   
   writeInStall();
+
+  if (setup.reqType==usbSetupPacket::rqType::usbClass){
+    for (tmp=0; tmp<usbHardware->nComponents; tmp++){
+  	  usbHardware->ud_component[tmp]->usbClassRequest(this, setup);
+    }
+    return;
+  }
 
   switch (setup.request){
     case usbStandardRequestCode::setAddress:
@@ -309,5 +317,6 @@ void usbDev::deviceEndpoint::setupRecieved(uint16_t nBytes){
     }
     break;
   };
+  
 }
 #pragma GCC pop_options
