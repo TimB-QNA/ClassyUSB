@@ -46,7 +46,7 @@ class usbEndpoint
 	
 
   // Data Handler routines
-    virtual void dataRecieved(uint16_t nBytes)=0;
+    virtual void dataRecieved(uint16_t nBytes);
     virtual void setupRecieved(uint16_t nBytes);
 
   // Normal IO Functions 

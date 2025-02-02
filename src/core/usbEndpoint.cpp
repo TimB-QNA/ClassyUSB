@@ -72,6 +72,9 @@ uint8_t usbEndpoint::hardwareEndpoint(){
 void usbEndpoint::setupRecieved(uint16_t nBytes){
 }
 
+void usbEndpoint::dataRecieved(uint16_t nBytes){		
+}
+	
 uint16_t usbEndpoint::writeIn(uint8_t *data, uint16_t nBytes, uint16_t maxLength){
   uint16_t msgLen=nBytes;
   if (usbHardware==nullptr) return 0;
