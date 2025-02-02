@@ -2,7 +2,7 @@
 #include <string.h>
 
 usbCDC::usbCDC(usbSubCDC *subclass, const char* name) : usbComponent((usbSubComponent*)subclass, 0x02, 0x00, 0x00, name){
-  ctrlEndpoint = new cdcEndpoint(this, 64, usbEndpoint::endpointSize::b64, usbEndpoint::endpointDirection::both, usbEndpoint::endpointType::control);
+  ctrlEndpoint = new cdcEndpoint(this, 64, usbEndpoint::endpointSize::b64, usbEndpoint::endpointDirection::in, usbEndpoint::endpointType::interrupt);
   assignEndpoint( ctrlEndpoint );
 }
     
@@ -22,18 +22,16 @@ void usbCDC::initComponent(){
 */
 
 void usbCDC::bufferFunctionalDescriptor(uint8_t *buffer, uint16_t *len){
-  usbComponent::headerDescriptor header;
-  header.bFunctionLength=5;
-  header.bDescriptorType=(uint8_t)usbCDC::descriptorTypes::interface;
-  header.bDescriptorSubtype=(uint8_t)usbCDC::descriptorSubTypes::headerFunctionalDescriptor; 
-  header.bcdCDC=0x01;
-  memcpy(buffer+*len, &header, header.bFunctionLength); *len+=header.bFunctionLength;
+  usbComponent::headerDescriptor     hdrDesc;
+  usbCDC::functionalDescriptor fncDesc;
 
-  header.bDescriptorSubtype=(uint8_t)usbCDC::descriptorSubTypes::callManagement;
-  header.bcdCDC=0x01;
-  memcpy(buffer+*len, &header, header.bFunctionLength); *len+=header.bFunctionLength;
+  hdrDesc.bFunctionLength=5;
+  hdrDesc.bDescriptorType=0x05; //(uint8_t)usbCDC::descriptorTypes::interface;
+  hdrDesc.bDescriptorSubtype=(uint8_t)usbCDC::descriptorSubTypes::headerFunctionalDescriptor; 
+  hdrDesc.bcdCDC=0x0110;
+  memcpy(buffer+*len, &hdrDesc, hdrDesc.bFunctionLength); *len+=hdrDesc.bFunctionLength;
 
-/*	
+/*
   usbComponent::functionalDescriptor ctrl;
 
   ctrl.bFunctionLength=5;

@@ -25,9 +25,41 @@ class usbSubCDC : public usbSubComponent
 
 class usbCDC : public usbComponent
 {
-  private:
-	enum class descriptorTypes         : uint16_t { interface=0x24, endpoint=0x25 };
-	enum class descriptorSubTypes      : uint16_t { headerFunctionalDescriptor=0x00, callManagement=0x02 };
+  public:
+    enum class descriptorTypes      : uint16_t { cs_interface = 0x24, cs_endpoint = 0x25 };
+
+    enum class descriptorSubTypes      : uint16_t { headerFunctionalDescriptor = 0x00,
+		                                            callManagement             = 0x01,
+													acmFunctional              = 0x02,
+													directLineManagement       = 0x03,
+													phoneRinger                = 0x04,
+													phoneCallAndState          = 0x05,
+													unionFunctional            = 0x06,
+													countrySelection           = 0x07,
+													phoneOpModes               = 0x08,
+													usbTerminal                = 0x09,
+													netChanTerminal            = 0x0A,
+													protocolUnit               = 0x0B,
+													extensionUnit              = 0x0C,
+													multichanManagement        = 0x0D,
+													capiControlManagement      = 0x0E,
+													ethernetFunctional         = 0x0F,
+													atmNetworking              = 0x10,
+													wirelessHandsetControl     = 0x11 };
+    typedef struct{
+	  uint8_t  bFunctionLength;
+	  uint8_t  bDescriptorType;
+	  uint8_t  bDescriptorSubtype;
+	  uint8_t  bmCapabilities;
+	  uint8_t  bDataInterface;
+    }capabilityDescriptor;
+
+    typedef struct{
+      uint8_t  bFunctionLength;
+      uint8_t  bDescriptorType;
+      uint8_t  bDescriptorSubtype;
+      uint8_t  bFnData[6];
+    }functionalDescriptor;
 		
   private:
     class cdcEndpoint : public usbEndpoint{
@@ -45,8 +77,6 @@ class usbCDC : public usbComponent
     usbCDC(usbSubCDC *subclass, const char* name="CDC");
 
   protected:
-    usbComponent::headerDescriptor      cdc_hdrDesc;
-    usbComponent::functionalDescriptor  cdc_fncDesc;
     usbEndpoint                        *ctrlEndpoint;
 
     void initComponent();
