@@ -46,17 +46,20 @@ class usbHID
 										   yugoslavia = 34,
 											turkish_f = 35 };
 
-    enum class descriptorCode : uint8_t { HID = 0x21, report = 0x22, physicalDescriptor = 0x23 };
-		
-    typedef struct{
-	  uint8_t bLength;
-	  uint8_t bDescriptorType;
+    enum class descriptorCode   : uint8_t { HID = 0x21, report = 0x22, physicalDescriptor = 0x23 };
+	enum class classRequestCode : uint8_t { getReport=0x01, getIdle=0x02, getProtocol=0x03, setReport=0x09, setIdle=0x0A, setProtocol=0x0B };
+	
+	#pragma pack(push, 1)
+    typedef struct {
+	  uint8_t  bLength;
+	  uint8_t  bDescriptorType;
 	  uint16_t bcdHID;
-	  uint8_t bCountryCode;
-	  uint8_t bNumDescriptors;
-	  uint8_t bFollowingDescriptorType;
+	  uint8_t  bCountryCode;
+	  uint8_t  bNumDescriptors;
+	  uint8_t  bFollowingDescriptorType;
 	  uint16_t bFollowingDescriptorLength;
     }hidDescriptor;
+	#pragma pack(pop)
 	
     class inEndpoint : public usbEndpoint {
 	  public:
