@@ -13,14 +13,18 @@
 
 #if PLATFORM_ENDIAN==0
   #define fromLE_u16(u16) u16
-
+  #define   toLE_u16(u16) u16
+  
   #define fromBE_u16(u16) swap_u16(u16)
+  #define   toBE_u16(u16) swap_u16(u16)
 #endif
 
 #if PLATFORM_ENDIAN==1
   #define fromLE_u16(u16) swap_u16(u16)
+  #define   toLE_u16(u16) swap_u16(u16)
 
   #define fromBE_u16(u16) u16
+  #define   toBE_u16(u16) u16
 #endif
 
 
