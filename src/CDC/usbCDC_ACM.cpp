@@ -20,6 +20,7 @@ usbCDC_ACM::usbCDC_ACM() : usbSubCDC(0x02, 0x00) // Abstract Control Model, no p
 }
 
 void usbCDC_ACM::initComponent(){
+
 }
 	
 usbCDC_ACM::cdcAcmEndpoint::cdcAcmEndpoint(usbCDC_ACM *p, uint16_t bSize, usbEndpoint::endpointSize sz, usbEndpoint::endpointDirection uDir, usbEndpoint::endpointType uType) : usbEndpoint(bSize, sz,uDir,uType){

@@ -29,7 +29,7 @@ void usbCDC::bufferFunctionalDescriptor(uint8_t *buffer, uint16_t *len){
   hdrDesc.bDescriptorType=0x05; //(uint8_t)usbCDC::descriptorTypes::interface;
   hdrDesc.bDescriptorSubtype=(uint8_t)usbCDC::descriptorSubTypes::headerFunctionalDescriptor; 
   hdrDesc.bcdCDC=0x0110;
-  memcpy(buffer+*len, &hdrDesc, hdrDesc.bFunctionLength); *len+=hdrDesc.bFunctionLength;
+//  memcpy(buffer+*len, &hdrDesc, hdrDesc.bFunctionLength); *len+=hdrDesc.bFunctionLength;
 
 /*
   usbComponent::functionalDescriptor ctrl;
