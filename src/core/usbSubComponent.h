@@ -33,6 +33,9 @@ class usbSubComponent
 	uint8_t assignInterfaceNumbers(uint8_t start);
 	
 	virtual void bufferFunctionalDescriptor(uint8_t *buffer, uint16_t *len)=0;
+	
+	void usbClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt);
+	virtual void handleClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt);
 };
 
 

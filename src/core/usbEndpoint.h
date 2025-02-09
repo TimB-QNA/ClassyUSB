@@ -12,6 +12,23 @@
 #include "usbTypes.h"
 
 class usbDev;
+class usbEndpoint;
+
+class usbHardwareEndpoint
+{
+  public:
+    enum class interruptType : uint8_t { unknown=0x00, dataRx=0x01, dataTx=0x02, error=0x03 };
+		
+    usbHardwareEndpoint(usbEndpoint *parent);
+	void interrupt(usbHardwareEndpoint::interruptType info, uint16_t msg);
+	
+    virtual uint16_t write(uint8_t *data, uint16_t nBytes)=0;
+    virtual void writeZLP()=0;
+    virtual void writeStall()=0;
+	
+  protected:
+    usbEndpoint *m_parent;
+};
 
 class usbEndpoint
 {
@@ -30,9 +47,8 @@ class usbEndpoint
     enum class endpointType      : uint8_t { control=0x00, isochronos=0x01, bulk=0x02, interrupt=0x03, dual=0x04 };
 
     usbEndpoint(uint16_t bufferSz, usbEndpoint::endpointSize sz, usbEndpoint::endpointDirection uDir, usbEndpoint::endpointType uType);
-    void setHardware(usbDev *hw);
-	void initialise();
-    void setHardwareEndpoint(uint8_t hardwareEndpoint);
+	void initialise(usbDev *usbHardware);
+    void setHardwareEndpoint(uint8_t address, usbHardwareEndpoint *hwEp);
     uint8_t hardwareEndpoint();
 
   // Information used by hardware
@@ -42,17 +58,17 @@ class usbEndpoint
     uint16_t                        bufferSize;
     uint8_t*                        inBuffer;
     uint8_t*                        outBuffer;
-    usbDev                          *usbHardware;
-	
+	uint16_t                        bytesRx;
+	uint16_t                        bytesTx;
+	usbHardwareEndpoint             *hw;
 
   // Data Handler routines
     virtual void dataRecieved(uint16_t nBytes);
-    virtual void setupRecieved(uint16_t nBytes);
 
   // Normal IO Functions 
-    uint16_t writeIn(uint8_t *data, uint16_t nBytes, uint16_t maxLength=0xFFFF);
-    void writeInZLP();
-    void writeInStall();
+    uint16_t write(uint8_t *data, uint16_t nBytes, uint16_t maxLength=0xFFFF);
+    void writeZLP();
+    void writeStall();
 
     endpointDescriptor descriptor;
 	

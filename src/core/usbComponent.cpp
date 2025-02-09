@@ -18,7 +18,6 @@ usbComponent::usbComponent(usbSubComponent *subclass, uint8_t classCode, uint8_t
     if (subclassCode==0x00) usb_ifaceDesc.bInterfaceSubClass = m_subclass->m_subclassCode;
     if (protocolCode==0x00) usb_ifaceDesc.bInterfaceProtocol = m_subclass->m_protocolCode;
   }
-  usb_ifaceDesc.bNumEndpoints=0;
 }
 
 void usbComponent::initialise(usbDev *usbHardware){
@@ -27,17 +26,15 @@ void usbComponent::initialise(usbDev *usbHardware){
   usb_ifaceDesc.iInterface=usbHardware->addStringDescriptor(m_componentName);
   
   initComponent();
- if (m_subclass!=nullptr) m_subclass->initialise(this);
+  if (m_subclass!=nullptr) m_subclass->initialise(this);
 
   for (i=0;i<m_nEp;i++){
-	m_ep[i]->setHardware(usbHardware);
-	m_ep[i]->initialise();
+	m_ep[i]->initialise(usbHardware);
   }
 
   if (m_subclass!=nullptr){
     for (i=0;i<m_subclass->m_nEp;i++){ 
-      m_subclass->m_ep[i]->setHardware(usbHardware);
-      m_subclass->m_ep[i]->initialise();
+      m_subclass->m_ep[i]->initialise(usbHardware);
     }
   }
 }
@@ -166,8 +163,10 @@ uint8_t usbComponent::assignInterfaceNumbers(uint8_t start){
  * are \emph{always} of type "Class"
  */
 void usbComponent::usbClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt){
-  if (pkt.rec==usbSetupPacket::rqRecipient::interface);
-  handleClassRequest(replyEp, pkt);
+  if (pkt.rec==usbSetupPacket::rqRecipient::interface){
+	if ((pkt.wIndex & 0xFF)==usb_ifaceDesc.bInterfaceNumber){ return handleClassRequest(replyEp, pkt); }
+  }
+  if (m_subclass!=nullptr) m_subclass->usbClassRequest(replyEp, pkt);
 }
 
 void usbComponent::handleClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt){

@@ -40,9 +40,11 @@ class usbDev
         enum class recipientType           : uint8_t { device=0,   interface=1, endpoint=2, other=3 };
         enum class standardFeatureSelector : uint8_t { deviceRemoteWakeup=1, endpointHalt=0, testMode=2 };
 
-        deviceEndpoint();
+        deviceEndpoint(usbDev* usbDevice);
         void dataRecieved(uint16_t nBytes);
-        void setupRecieved(uint16_t nBytes);
+		
+	  private:
+	    usbDev *m_device;
     };
 
     friend class deviceEndpoint;
@@ -130,7 +132,6 @@ class usbDev
   protected:
     uint8_t     nEndpoints;
     uint8_t     maxHardwareEndpoints;
-    usbEndpoint *epList[USB_MAX_ENDPOINTS];
 
     uint16_t ud_vid;
     uint16_t ud_pid;
@@ -142,13 +143,12 @@ class usbDev
 
     const char *ud_vendorDesc;
     const char *ud_productDesc;
-    usbDev::deviceEndpoint     ud_control;
+    usbDev::deviceEndpoint     *ud_control;
     usbDev::deviceDescriptor   ud_descriptor;
     usbDev::deviceQualifier    ud_qualifier;
     usbDev::languageDescriptor ud_languageList;
     usbDev::stringDescriptor   ud_stringDescriptors[USB_MAX_STRINGDESCRIPTORS];
-    uint8_t nStringDesc;
-
+	
     uint8_t nInterfaces;
     uint8_t nComponents;
     usbComponent *ud_component[USB_MAX_COMPONENTS];
@@ -175,11 +175,6 @@ class usbDev
 
     // Endpoint buffers
 	virtual bool allocateEndpointBuffer(uint8_t **buffer, uint16_t bufferSize)=0;
-	
-    // Hardware Comms Routines
-    virtual uint16_t writeIn(uint8_t ep, uint16_t nBytes)=0;
-    virtual void     writeInZLP(uint8_t ep)=0;
-    virtual void     writeInStall(uint8_t ep)=0;
 
     // Hardware operation
     virtual void hardwareExec()=0;

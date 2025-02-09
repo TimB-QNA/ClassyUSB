@@ -16,6 +16,8 @@ class usbComponent{
   friend class usbSubComponent;
 
   public:
+    enum class classCodes : uint8_t { none = 0x00, CDC=0x02, HID=0x03 };
+		  
   typedef struct{
     uint8_t  bLength;             // Size of descriptor (always 9)
     uint8_t  bDescriptorType;     // Interface descriptor Type  - USB Standard page 251

@@ -57,3 +57,16 @@ uint8_t usbSubComponent::assignInterfaceNumbers(uint8_t start){
 uint8_t usbSubComponent::endpoints(){
 	return m_nEp;
 }
+
+/*!
+ * Setup packets received here (which come from the main device control pipe)
+ * are \emph{always} of type "Class"
+ */
+void usbSubComponent::usbClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt){
+  if (pkt.rec==usbSetupPacket::rqRecipient::interface){
+	if ((pkt.wIndex & 0xFF)==sub_ifaceDesc.bInterfaceNumber){ return handleClassRequest(replyEp, pkt); }
+  }
+}
+
+void usbSubComponent::handleClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt){
+}
