@@ -48,7 +48,7 @@ class samd21usbDevice : public usbDev
 
   protected:
     void initialiseHardware();
-    void hardwareExec();
+    void hardwareExec(uint64_t millis);
     void setAddress(uint8_t addr);
     void setMode(usbModeTypes mode);
 

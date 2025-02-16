@@ -161,9 +161,9 @@ void samd21usbDevice::attach(){
   USB->DEVICE.CTRLB.bit.DETACH=0; // Attach to USB BUS
 }
 
-void samd21usbDevice::hardwareExec(){
-  if (USB->DEVICE.CTRLB.bit.DETACH==1) USB->DEVICE.CTRLB.bit.DETACH=0; // Attach to USB BUS
-  interruptHandler();
+void samd21usbDevice::hardwareExec(uint64_t millis){
+//  if (USB->DEVICE.CTRLB.bit.DETACH==1) USB->DEVICE.CTRLB.bit.DETACH=0; // Attach to USB BUS
+//  interruptHandler();
 }
 
 // Set device address on bus.
