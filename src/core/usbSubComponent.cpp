@@ -62,11 +62,24 @@ uint8_t usbSubComponent::endpoints(){
  * Setup packets received here (which come from the main device control pipe)
  * are \emph{always} of type "Class"
  */
-void usbSubComponent::usbClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt){
-  if (pkt.rec==usbSetupPacket::rqRecipient::interface){
+bool usbSubComponent::usbClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt){
+  if (pkt.bmRequestType.recipient==usbSetupPacket::rqRecipient::interface){
 	if ((pkt.wIndex & 0xFF)==sub_ifaceDesc.bInterfaceNumber){ return handleClassRequest(replyEp, pkt); }
   }
+  return false;
 }
 
-void usbSubComponent::handleClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt){
+bool usbSubComponent::handleClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt){
+  return false;
+}
+
+bool usbSubComponent::usbInterfaceRequest(usbEndpoint *replyEp, usbSetupPacket pkt){
+  if (pkt.bmRequestType.recipient==usbSetupPacket::rqRecipient::interface){
+	if ((pkt.wIndex & 0xFF)==sub_ifaceDesc.bInterfaceNumber){ return handleInterfaceRequest(replyEp, pkt); }
+  }
+  return false;
+}
+
+bool usbSubComponent::handleInterfaceRequest(usbEndpoint *replyEp, usbSetupPacket pkt){	
+  return false;
 }

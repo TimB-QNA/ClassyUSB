@@ -41,7 +41,7 @@ class usbComponent{
     usbComponent(usbSubComponent *subclass=nullptr, uint8_t classCode=0x00, uint8_t subclassCode=0x00, uint8_t protocolCode=0x00, const char *name=nullptr);
 	void initialise(usbDev *usbHardware);
     uint8_t endpoints();
-    virtual void exec();
+    virtual void exec(uint64_t millis);
     
     virtual uint8_t subclassCode();
     virtual uint8_t protocolCode();
@@ -64,8 +64,11 @@ class usbComponent{
 	virtual void bufferSupplementalInterfaceDescriptor(uint8_t *buffer, uint16_t *len);
     virtual void bufferFunctionalDescriptor(uint8_t *buffer, uint16_t *len);
 	
-	void usbClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt);
-	virtual void handleClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt);
+	bool usbClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt);
+	virtual bool handleClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt);
+	
+	bool usbInterfaceRequest(usbEndpoint *replyEp, usbSetupPacket pkt);
+    virtual bool handleInterfaceRequest(usbEndpoint *replyEp, usbSetupPacket pkt);
 };
 
 #include "usbDev.h"

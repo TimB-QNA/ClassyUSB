@@ -34,8 +34,11 @@ class usbSubComponent
 	
 	virtual void bufferFunctionalDescriptor(uint8_t *buffer, uint16_t *len)=0;
 	
-	void usbClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt);
-	virtual void handleClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt);
+	bool usbClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt);
+	virtual bool handleClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt);
+	
+	bool usbInterfaceRequest(usbEndpoint *replyEp, usbSetupPacket pkt);
+	virtual bool handleInterfaceRequest(usbEndpoint *replyEp, usbSetupPacket pkt);
 };
 
 

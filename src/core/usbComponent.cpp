@@ -134,7 +134,7 @@ uint8_t usbComponent::endpoints(){
 //}
 
 // Do nothing by default.
-void usbComponent::exec(){
+void usbComponent::exec(uint64_t millis){
 
 }
 
@@ -162,12 +162,33 @@ uint8_t usbComponent::assignInterfaceNumbers(uint8_t start){
  * Setup packets received here (which come from the main device control pipe)
  * are \emph{always} of type "Class"
  */
-void usbComponent::usbClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt){
-  if (pkt.rec==usbSetupPacket::rqRecipient::interface){
+bool usbComponent::usbClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt){
+  if (pkt.bmRequestType.recipient==usbSetupPacket::rqRecipient::interface){
 	if ((pkt.wIndex & 0xFF)==usb_ifaceDesc.bInterfaceNumber){ return handleClassRequest(replyEp, pkt); }
   }
-  if (m_subclass!=nullptr) m_subclass->usbClassRequest(replyEp, pkt);
+  if (m_subclass!=nullptr) return m_subclass->usbClassRequest(replyEp, pkt);
+  return false;
 }
 
-void usbComponent::handleClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt){
+/*!
+ * Re-implement in your driver and return true if the request was handled.
+ */
+bool usbComponent::handleClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt){
+  return false;
+}
+
+
+bool usbComponent::usbInterfaceRequest(usbEndpoint *replyEp, usbSetupPacket pkt){
+  if (pkt.bmRequestType.recipient==usbSetupPacket::rqRecipient::interface){
+	if ((pkt.wIndex & 0xFF)==usb_ifaceDesc.bInterfaceNumber){ return handleInterfaceRequest(replyEp, pkt); }
+  }
+  if (m_subclass!=nullptr) return m_subclass->handleInterfaceRequest(replyEp, pkt);
+  return false;
+}
+
+/*!
+ * Re-implement in your driver and return true if the request was handled.
+ */
+bool usbComponent::handleInterfaceRequest(usbEndpoint *replyEp, usbSetupPacket pkt){
+  return false;
 }
