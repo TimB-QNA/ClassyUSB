@@ -7,21 +7,22 @@
 
 class usbSetupPacket{
   public:
-    enum rqDir       { toDevice=0x00,    toHost=0x01 };
-    enum rqType      { standard=0x00,  usbClass=0x01,   vendor=0x02, reserved=0x03 };
-    enum rqRecipient {   device=0x00, interface=0x01, endpoint=0x02,    other=0x03 };
+    enum class rqDir       : uint8_t { toDevice=0x00,    toHost=0x80 };
+    enum class rqType      : uint8_t { standard=0x00,  usbClass=0x20,   vendor=0x40, reserved=0x60 };
+    enum class rqRecipient : uint8_t {   device=0x00, interface=0x01, endpoint=0x02,    other=0x03 };
 
-    union{
-      uint8_t bmRequestType;
-	  rqDir   reqDir  : 1;
-	  rqType  reqType : 2;
-	  rqRecipient rec : 5;
-	};
+    struct{
+      uint8_t     data;
+	  rqDir       dir;
+	  rqType      type;
+	  rqRecipient recipient;
+	}bmRequestType;
 	
-    union{
-      uint8_t  bRequest;
+    struct{
+      uint8_t  data;
       usbStandardRequestCode request;
-    };
+    }bRequest;
+	
     uint16_t wValue;
     
     usbDescriptorTypes descriptor;
@@ -31,6 +32,7 @@ class usbSetupPacket{
     uint16_t wLength;
     
     usbSetupPacket(uint8_t *data);
+	uint8_t rawData[8];
 };
 
 #endif /* USBSETUPPACKET_H_ */
