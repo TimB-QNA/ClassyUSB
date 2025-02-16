@@ -113,12 +113,12 @@ bool usbDev::addEndpoint(usbEndpoint *ep){
   return true;
 }
 
-void usbDev::exec(){
+void usbDev::exec(uint64_t millis){
   uint8_t i;
 
-  hardwareExec(); // Copy data from hardware to endpoints/components are required
+  hardwareExec(millis); // Copy data from hardware to endpoints/components are required
 
-  for (i=0;i<nComponents;i++) ud_component[i]->exec(); // exec components as appropriate.
+  for (i=0;i<nComponents;i++) ud_component[i]->exec(millis); // exec components as appropriate.
 }
 
 void usbDev::populateDescriptor(){
@@ -242,22 +242,36 @@ void usbDev::deviceEndpoint::dataRecieved(uint16_t nBytes){
   memcpy(dbgTxn, (void*)outBuffer, nBytes);
 
   usbSetupPacket setup(outBuffer);
-  
-  writeStall();
 
-  if (setup.reqType==usbSetupPacket::rqType::usbClass){
+  if (setup.bmRequestType.type==usbSetupPacket::rqType::usbClass){
     for (tmp=0; tmp<m_device->nComponents; tmp++){
   	  m_device->ud_component[tmp]->usbClassRequest(this, setup);
     }
+	writeStall();
     return;
   }
 
-  switch (setup.request){
-    case usbStandardRequestCode::setAddress:
-      writeZLP();
+  if (setup.bmRequestType.recipient==usbSetupPacket::rqRecipient::interface){
+    for (tmp=0; tmp<m_device->nComponents; tmp++){
+	  m_device->ud_component[tmp]->usbInterfaceRequest(this, setup);
+    }
+	writeStall();
+    return;
+  }
+  
+  if (setup.bmRequestType.data==0x00){
+	if (setup.bRequest.request==usbStandardRequestCode::setAddress){
+	  writeZLP();
       m_device->setAddress(setup.wValue);
-      break;
-
+	  return;
+	}
+	
+	if (setup.bRequest.request==usbStandardRequestCode::setConfiguration){
+      if (setup.wValue==1){ writeZLP(); return; }
+	}
+  }
+  
+  switch (setup.bRequest.request){
     case usbStandardRequestCode::getDescriptor:
       if (setup.descriptor==usbDescriptorTypes::device){
         write((uint8_t*)&m_device->ud_descriptor, m_device->ud_descriptor.bLength, setup.wLength);
@@ -281,17 +295,11 @@ void usbDev::deviceEndpoint::dataRecieved(uint16_t nBytes){
       }
       break;
 
-    case usbStandardRequestCode::setConfiguration:
-      if (setup.wValue==1){
-        writeZLP();
-      }else{
-        writeStall();
-      }
-      break;
+
 
     case usbStandardRequestCode::setFeature:
     // USB Specification 2.0 Page 259
-      if (setup.bmRequestType==0){ // TEST_MODE feature is only one valid for USB Device
+      if (setup.bmRequestType.data==0){ // TEST_MODE feature is only one valid for USB Device
         if ((setup.wIndex >> 8) == 0x01) m_device->setMode(usbModeTypes::TestModeJ);
         if ((setup.wIndex >> 8) == 0x02) m_device->setMode(usbModeTypes::TestModeK);
         if ((setup.wIndex >> 8) == 0x03) m_device->setMode(usbModeTypes::TestModeNAK);
@@ -301,7 +309,7 @@ void usbDev::deviceEndpoint::dataRecieved(uint16_t nBytes){
       break;
     case usbStandardRequestCode::clearFeature:
     // USB Specification 2.0 Page 259
-    if (setup.bmRequestType==0){ // TEST_MODE feature is only one valid for USB Device
+    if (setup.bmRequestType.data==0){ // TEST_MODE feature is only one valid for USB Device
       if ((setup.wIndex >> 8) == 0x01) m_device->setMode(usbModeTypes::TestModeJ);
       if ((setup.wIndex >> 8) == 0x02) m_device->setMode(usbModeTypes::TestModeK);
       if ((setup.wIndex >> 8) == 0x03) m_device->setMode(usbModeTypes::TestModeNAK);
@@ -311,5 +319,6 @@ void usbDev::deviceEndpoint::dataRecieved(uint16_t nBytes){
     break;
   };
   
+  writeStall();
 }
 #pragma GCC pop_options

@@ -127,7 +127,7 @@ class usbDev
 
     bool addComponent(usbComponent *component);
 
-    void exec();
+    void exec(uint64_t millis);
 
   protected:
     uint8_t     nEndpoints;
@@ -177,7 +177,7 @@ class usbDev
 	virtual bool allocateEndpointBuffer(uint8_t **buffer, uint16_t bufferSize)=0;
 
     // Hardware operation
-    virtual void hardwareExec()=0;
+    virtual void hardwareExec(uint64_t millis)=0;
 };
 
 #endif /* USBDEV_H_ */
