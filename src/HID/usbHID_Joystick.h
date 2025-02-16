@@ -33,6 +33,7 @@ class usbHID_Joystick : public usbComponent
 	
     usbHID_Joystick();
     bool addChannel(channel *userChan);
+	void exec(uint64_t millis);
 
   protected:
     usbEndpoint *inEndpoint;
@@ -41,7 +42,8 @@ class usbHID_Joystick : public usbComponent
 
     void bufferSupplementalInterfaceDescriptor(uint8_t *buffer, uint16_t *len);
 	
-	void handleClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt);
+	bool handleClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt);
+	bool handleInterfaceRequest(usbEndpoint *replyEp, usbSetupPacket pkt);
 	
 	uint16_t reportLength();
 	void    configurationReport(uint8_t *buffer, uint16_t *len);

@@ -31,6 +31,9 @@ bool usbHID_Joystick::addChannel(channel *userChan){
   return true;
 }
 
+void usbHID_Joystick::exec(uint64_t millis){
+}
+
 void usbHID_Joystick::initComponent(){
  
 }
@@ -73,18 +76,38 @@ void usbHID_Joystick::addReportTag(uint8_t *buffer, uint16_t *len, ){
 }
 */
 
-void usbHID_Joystick::handleClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt){
+bool usbHID_Joystick::handleClassRequest(usbEndpoint *replyEp, usbSetupPacket pkt){
   uint8_t buffer[256];
   uint16_t bufferLen;
   
-  if (pkt.bRequest==(uint8_t)usbHID::classRequestCode::getReport){
+  if (pkt.bmRequestType.data!=0x21 && pkt.bmRequestType.data!=0xA1) return false; // Only two acceptable packet types.
+  
+  if (pkt.bRequest.data==(uint8_t)usbHID::classRequestCode::getReport){
 	configurationReport(buffer, &bufferLen);
 	replyEp->write(buffer, bufferLen);
   }
   
-  if (pkt.bRequest==(uint8_t)usbHID::classRequestCode::setIdle) replyEp->writeZLP();
+  if (pkt.bRequest.data==(uint8_t)usbHID::classRequestCode::setIdle) replyEp->writeZLP();
+  
+  return true;
 }
+
+bool usbHID_Joystick::handleInterfaceRequest(usbEndpoint *replyEp, usbSetupPacket pkt){
+  uint8_t buffer[256];
+  uint16_t bufferLen;
+  
+  if (pkt.bRequest.request==usbStandardRequestCode::getDescriptor){
+	if ((uint16_t)pkt.descriptor==(uint16_t)usbHID::descriptorCode::report){
+  	  configurationReport(buffer, &bufferLen);
+	  replyEp->write(buffer, bufferLen);
+	  return true;
+	}
+  }
+  return true;
+}
+
 
 void usbHID_Joystick::update(){
 	// Send data to PC
 }
+
