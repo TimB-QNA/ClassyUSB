@@ -11,7 +11,8 @@ usbHardwareEndpoint::usbHardwareEndpoint(usbEndpoint *parent){
  */
 void usbHardwareEndpoint::interrupt(usbHardwareEndpoint::interruptType info, uint16_t msg){
   switch(info){
-    case interruptType::dataRx: m_parent->dataRecieved(msg);
+    case interruptType::dataRx: m_parent->dataRecieved(msg); readComplete(); break;
+    case interruptType::dataTx: m_parent->transmitComplete(); isWriting=false;
   }
 }
     
@@ -24,6 +25,8 @@ usbEndpoint::usbEndpoint(uint16_t bufferSz, usbEndpoint::endpointSize sz, usbEnd
   inBuffer=nullptr;
   outBuffer=nullptr;
   m_endpointNumber=0x0F;
+  
+  async=true;
 }
 
 void usbEndpoint::initialise(usbDev *usbHardware){
@@ -32,6 +35,8 @@ void usbEndpoint::initialise(usbDev *usbHardware){
   if (dir==usbEndpoint::endpointDirection::in  || type==usbEndpoint::endpointType::control || type==usbEndpoint::endpointType::dual) usbHardware->allocateEndpointBuffer(&inBuffer, bufferSize);
   if (dir==usbEndpoint::endpointDirection::out || type==usbEndpoint::endpointType::control || type==usbEndpoint::endpointType::dual) usbHardware->allocateEndpointBuffer(&outBuffer, bufferSize);
   
+  if (type==usbEndpoint::endpointType::control) async=true;
+
   descriptor.bLength          = 7;                                     // Size of descriptor (always 9)
   descriptor.bDescriptorType  = (uint8_t)usbDescriptorTypes::endpoint; // Interface descriptor Type  - USB Standard page 251
 
@@ -81,6 +86,9 @@ uint8_t usbEndpoint::hardwareEndpoint(){
 void usbEndpoint::dataRecieved(uint16_t nBytes){        
 }
 
+void usbEndpoint::transmitComplete(){
+}
+
 uint16_t usbEndpoint::write(uint8_t *data, uint16_t nBytes, uint16_t maxLength){
   uint16_t msgLen=nBytes;
   if (hw==nullptr) return 0;
@@ -99,4 +107,9 @@ void usbEndpoint::writeZLP(){
 void usbEndpoint::writeStall(){
   if (hw==nullptr) return;
   hw->writeStall();
+}
+
+// State
+bool usbEndpoint::isWriting(){
+  return hw->isWriting;
 }

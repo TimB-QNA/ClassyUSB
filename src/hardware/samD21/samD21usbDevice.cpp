@@ -53,6 +53,11 @@ void samd21usbDevice::interruptHandler(){
       epMgt[i]->interrupt(usbHardwareEndpoint::interruptType::dataRx, hwEp[i].out.PCKSIZE.bit.BYTE_COUNT); // OUT (from host) transaction
       USB->DEVICE.DeviceEndpoint[i].EPSTATUSCLR.bit.BK0RDY = 1;
     }
+    if (USB->DEVICE.DeviceEndpoint[i].EPINTFLAG.bit.TRCPT0==1){
+      epMgt[i]->interrupt(usbHardwareEndpoint::interruptType::dataRx, hwEp[i].out.PCKSIZE.bit.BYTE_COUNT); // OUT (from host) transaction
+      USB->DEVICE.DeviceEndpoint[i].EPSTATUSCLR.bit.BK0RDY = 1;
+    }
+    if (USB->DEVICE.DeviceEndpoint[i].EPINTFLAG.bit.TRCPT1==1) epMgt[i]->interrupt(usbHardwareEndpoint::interruptType::dataTx, 0); // IN (to host) transaction
     USB->DEVICE.DeviceEndpoint[i].EPINTFLAG.reg=0xFF;
   }
 
@@ -98,7 +103,7 @@ void samd21usbDevice::initialiseHardware(){
   USB->DEVICE.CTRLA.bit.RUNSTDBY = 1; // Enable Run in Standby
   
   setMode(usbModeTypes::FullSpeed);
-  USB->DEVICE.CTRLB.bit.DETACH=0;
+  USB->DEVICE.CTRLB.bit.DETACH=1;
 
   USB->DEVICE.INTENSET.bit.EORST=1;
 
@@ -262,6 +267,7 @@ void samD21usbEndpoint::configure(){
   if (m_parent->dir==usbEndpoint::endpointDirection::in  || m_parent->dir==usbEndpoint::endpointDirection::both) ep->EPCFG.bit.EPTYPE1=(uint8_t)typeCode(m_parent->type);
   ep->EPINTENSET.bit.RXSTP=1;  // Interrupt on setup packet
   ep->EPINTENSET.bit.TRCPT0=1; // Interrupt on receipt
+  ep->EPINTENSET.bit.TRCPT1=1; // Interrupt on all data sent
   ep->EPSTATUSCLR.reg=0xFF; // Clear register
   
   out->PCKSIZE.bit.SIZE=sizeCode(m_parent->size);
@@ -281,6 +287,7 @@ void samD21usbEndpoint::readComplete(){
 }
 
 uint16_t samD21usbEndpoint::write(uint8_t *data, uint16_t nBytes){
+  isWriting=true;
   if (data!=nullptr && nBytes>0) memcpy(m_parent->inBuffer, data, nBytes);
    
   in->PCKSIZE.bit.BYTE_COUNT=nBytes;
@@ -293,10 +300,11 @@ uint16_t samD21usbEndpoint::write(uint8_t *data, uint16_t nBytes){
   ep->EPSTATUSSET.bit.BK1RDY=1;
 
   /* Wait for transfer to complete */
-  while (ep->EPINTFLAG.bit.TRCPT1==0 && ep->EPINTFLAG.bit.TRFAIL1==0)
-  {
+  if (m_parent->async){
+    while (ep->EPINTFLAG.bit.TRCPT1==0 && ep->EPINTFLAG.bit.TRFAIL1==0){ }
+    isWriting=false;
+    if (ep->EPINTFLAG.bit.TRCPT1==1)  return nBytes;
   }
-  if (ep->EPINTFLAG.bit.TRCPT1==1)  return nBytes;
   return 0;
 }
 

@@ -25,7 +25,9 @@ class usbHardwareEndpoint
     virtual uint16_t write(uint8_t *data, uint16_t nBytes)=0;
     virtual void writeZLP()=0;
     virtual void writeStall()=0;
-    
+    virtual void readComplete()=0;
+    bool isWriting=false;
+
   protected:
     usbEndpoint *m_parent;
 };
@@ -61,15 +63,19 @@ class usbEndpoint
     uint16_t                        bytesRx;
     uint16_t                        bytesTx;
     usbHardwareEndpoint             *hw;
+    bool                            async; ///< Force Asynchronous transfer if true (normally only control endpoints).
 
   // Data Handler routines
     virtual void dataRecieved(uint16_t nBytes);
+    virtual void transmitComplete();
 
   // Normal IO Functions 
     uint16_t write(uint8_t *data, uint16_t nBytes, uint16_t maxLength=0xFFFF);
     void writeZLP();
     void writeStall();
 
+  // State
+    bool isWriting();
     endpointDescriptor descriptor;
     
   protected:
