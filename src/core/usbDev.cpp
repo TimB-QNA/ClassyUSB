@@ -84,7 +84,7 @@ bool usbDev::addComponentEndpoints(usbComponent *component){
   uint8_t i, j;
 
   for (i=0;i<component->m_nIface;i++){
-    for (j=0;j<component->m_nIface;j++){
+    for (j=0;j<component->m_iface[i]->m_nEp;j++){
       if (!addEndpoint(component->m_iface[i]->m_ep[j])) return false;
     }
   }
