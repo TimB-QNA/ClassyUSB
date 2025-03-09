@@ -5,11 +5,12 @@
  *  Author: Tim
  */ 
 
-#include "usbCDC.h"
-#include "../core/usbInterface.h"
-
 #ifndef USBCDC_ACM_H_
 #define USBCDC_ACM_H_
+
+#include "usbCDC.h"
+#include "../core/usbInterface.h"
+#include "../utils/ringBuffer.h"
 
 class usbCDC_ACM : public usbCDC
 {
@@ -18,13 +19,18 @@ class usbCDC_ACM : public usbCDC
   private:
     class cdcAcmEndpoint : public usbEndpoint{
       public:
-        cdcAcmEndpoint(usbCDC_ACM *p, uint16_t bSize, usbEndpoint::endpointSize sz, usbEndpoint::endpointDirection uDir, usbEndpoint::endpointType uType);
+        enum class opMode : uint8_t { alert = 0x00, receive = 0x01, transmit = 0x02 };
+        cdcAcmEndpoint(usbCDC_ACM *p, usbCDC_ACM::cdcAcmEndpoint::opMode mode, uint16_t bSize, usbEndpoint::endpointSize sz, usbEndpoint::endpointDirection uDir, usbEndpoint::endpointType uType);
+      
+      protected:
         void dataRecieved(uint16_t nBytes);
-
+        void transmitComplete();
+      
       private:
+        usbCDC_ACM::cdcAcmEndpoint::opMode m_mode;
         usbCDC_ACM *parent;
     };
-    
+
     class cdcMainInterface : public usbInterface{
       public:
         cdcMainInterface();
@@ -49,7 +55,7 @@ class usbCDC_ACM : public usbCDC
       uint8_t  bmCapabilities;
     }managementDescriptor;
 
-    usbCDC_ACM();
+    usbCDC_ACM(uint8_t *txBuffSpace, uint16_t txSize, uint8_t *rxBuffSpace, uint16_t rxSize);
 
     uint16_t write(uint8_t *data, uint16_t nBytes);
 
@@ -62,6 +68,9 @@ class usbCDC_ACM : public usbCDC
     usbCDC_ACM::cdcAcmEndpoint *dInEp;
     usbCDC_ACM::cdcAcmEndpoint *dOutEp;
     usbCDC_ACM::cdcAcmEndpoint *ctrlEp;
+
+    ringBuffer rxBuffer;
+    ringBuffer txBuffer;
 };
 
 #endif /* USBCDC_ACM_H_ */

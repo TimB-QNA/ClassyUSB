@@ -2,11 +2,11 @@
 #include "usbCDC.h"
 #include <string.h>
 
-usbCDC_ACM::usbCDC_ACM() : usbCDC("CDC_ACM")
+usbCDC_ACM::usbCDC_ACM(uint8_t *txBuffSpace, uint16_t txSize, uint8_t *rxBuffSpace, uint16_t rxSize) : usbCDC("CDC_ACM")
 {
-  ctrlEp = new usbCDC_ACM::cdcAcmEndpoint(this, 64, usbEndpoint::endpointSize::b64, usbEndpoint::endpointDirection::in,  usbEndpoint::endpointType::interrupt);
-  dInEp  = new usbCDC_ACM::cdcAcmEndpoint(this, 64, usbEndpoint::endpointSize::b64, usbEndpoint::endpointDirection::in,  usbEndpoint::endpointType::bulk);
-  dOutEp = new usbCDC_ACM::cdcAcmEndpoint(this, 64, usbEndpoint::endpointSize::b64, usbEndpoint::endpointDirection::out, usbEndpoint::endpointType::bulk);   
+  ctrlEp = new usbCDC_ACM::cdcAcmEndpoint(this, usbCDC_ACM::cdcAcmEndpoint::opMode::alert,    64, usbEndpoint::endpointSize::b64, usbEndpoint::endpointDirection::in,  usbEndpoint::endpointType::interrupt);
+  dInEp  = new usbCDC_ACM::cdcAcmEndpoint(this, usbCDC_ACM::cdcAcmEndpoint::opMode::transmit, 64, usbEndpoint::endpointSize::b64, usbEndpoint::endpointDirection::in,  usbEndpoint::endpointType::bulk);
+  dOutEp = new usbCDC_ACM::cdcAcmEndpoint(this, usbCDC_ACM::cdcAcmEndpoint::opMode::receive,  64, usbEndpoint::endpointSize::b64, usbEndpoint::endpointDirection::out, usbEndpoint::endpointType::bulk);   
     
   m_mainIface.addEndpoint(ctrlEp);
   m_dataIface.addEndpoint(dInEp);
@@ -15,29 +15,52 @@ usbCDC_ACM::usbCDC_ACM() : usbCDC("CDC_ACM")
 
   addInterface(&m_mainIface);
   addInterface(&m_dataIface);
+
+  rxBuffer.init(rxBuffSpace, rxSize);
+  txBuffer.init(txBuffSpace, txSize);
 }
 
 void usbCDC_ACM::initComponent(){
 
 }
 
-
 uint16_t usbCDC_ACM::write(uint8_t *data, uint16_t nBytes){
-  dInEp->write(data, nBytes);
-};
+  uint16_t i;
+  uint16_t nb=0;
 
-usbCDC_ACM::cdcAcmEndpoint::cdcAcmEndpoint(usbCDC_ACM *p, uint16_t bSize, usbEndpoint::endpointSize sz, usbEndpoint::endpointDirection uDir, usbEndpoint::endpointType uType) : usbEndpoint(bSize, sz,uDir,uType){
+  for (i=0;i<nBytes;i++) txBuffer.enqueue(data[i]);
+  if (!dInEp->isWriting()){
+    nb=txBuffer.dequeueBlock(dInEp->inBuffer, dInEp->bufferSize);
+    dInEp->write(nullptr, nb);
+  }
+  return nb;
+}
+
+usbCDC_ACM::cdcAcmEndpoint::cdcAcmEndpoint(usbCDC_ACM *p, usbCDC_ACM::cdcAcmEndpoint::opMode mode, uint16_t bSize, usbEndpoint::endpointSize sz, usbEndpoint::endpointDirection uDir, usbEndpoint::endpointType uType) : usbEndpoint(bSize, sz,uDir,uType){
   parent=p;
+  m_mode=mode;
 }
 
 #pragma GCC push_options
 #pragma GCC optimize ("O0")
 void usbCDC_ACM::cdcAcmEndpoint::dataRecieved(uint16_t nBytes){
-  // Handle Received data
-   usbCDC::functionalDescriptor fncDesc;
+  uint16_t i;
+
+  if (m_mode==usbCDC_ACM::cdcAcmEndpoint::opMode::receive){
+    for (i=0;i<nBytes;i++) parent->rxBuffer.enqueue(outBuffer[i]);
+  }
 }
 #pragma GCC pop_options
 
+void usbCDC_ACM::cdcAcmEndpoint::transmitComplete(){
+  uint16_t nb=0;
+
+  if (m_mode==usbCDC_ACM::cdcAcmEndpoint::opMode::transmit){
+    // Write data from tx buffer to endpoint if applicable
+//    nb=parent->txBuffer.dequeueBlock(inBuffer, bufferSize);
+//    write(nullptr, nb);
+  }
+}
 
 usbCDC_ACM::cdcMainInterface::cdcMainInterface() : usbInterface((uint8_t)usbComponent::classCodes::CDC, (uint8_t)usbCDC::subclassCodes::abstractControlModel, 0, 0, "CDC Main"){
 //  m_dataInterface=dataInterface;
