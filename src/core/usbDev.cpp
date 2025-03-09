@@ -74,9 +74,6 @@ bool usbDev::addComponent(usbComponent *component){
   nComponents++;
   
   if (!addComponentEndpoints(component)) return false;
-  if (component->m_subclass!=nullptr){
-	if (!addComponentEndpoints(component->m_subclass)) return false;
-  }
   
   component->initialise(this);
 
@@ -84,20 +81,12 @@ bool usbDev::addComponent(usbComponent *component){
 }
 
 bool usbDev::addComponentEndpoints(usbComponent *component){
-  uint8_t i;
+  uint8_t i, j;
 
-  for (i=0;i<component->m_nEp;i++){
-    if (!addEndpoint(component->m_ep[i])) return false;
-  }
-
-  return true;
-}
-
-bool usbDev::addComponentEndpoints(usbSubComponent *component){
-  uint8_t i;
-
-  for (i=0;i<component->m_nEp;i++){
-	if (!addEndpoint(component->m_ep[i])) return false;
+  for (i=0;i<component->m_nIface;i++){
+    for (j=0;j<component->m_nIface;j++){
+      if (!addEndpoint(component->m_iface[i]->m_ep[j])) return false;
+    }
   }
 
   return true;
@@ -234,41 +223,36 @@ usbDev::deviceEndpoint::deviceEndpoint(usbDev* usbDevice) : usbEndpoint(512, usb
 #pragma GCC optimize ("O0")
 void usbDev::deviceEndpoint::dataRecieved(uint16_t nBytes){
   uint8_t tmp=0;
-  uint8_t descBuffer[512];
-  uint16_t descLen;
-
-  uint8_t dbgTxn[64];
-  memset(dbgTxn, 0, 64);
-  memcpy(dbgTxn, (void*)outBuffer, nBytes);
+  uint16_t descLen=0;
 
   usbSetupPacket setup(outBuffer);
 
   if (setup.bmRequestType.type==usbSetupPacket::rqType::usbClass){
     for (tmp=0; tmp<m_device->nComponents; tmp++){
-  	  m_device->ud_component[tmp]->usbClassRequest(this, setup);
+        m_device->ud_component[tmp]->usbClassRequest(this, setup);
     }
-	writeStall();
+    writeStall();
     return;
   }
 
   if (setup.bmRequestType.recipient==usbSetupPacket::rqRecipient::interface){
     for (tmp=0; tmp<m_device->nComponents; tmp++){
-	  m_device->ud_component[tmp]->usbInterfaceRequest(this, setup);
+      m_device->ud_component[tmp]->usbInterfaceRequest(this, setup);
     }
-	writeStall();
+    writeStall();
     return;
   }
   
   if (setup.bmRequestType.data==0x00){
-	if (setup.bRequest.request==usbStandardRequestCode::setAddress){
-	  writeZLP();
+    if (setup.bRequest.request==usbStandardRequestCode::setAddress){
+      writeZLP();
       m_device->setAddress(setup.wValue);
-	  return;
-	}
-	
-	if (setup.bRequest.request==usbStandardRequestCode::setConfiguration){
+      return;
+    }
+    
+    if (setup.bRequest.request==usbStandardRequestCode::setConfiguration){
       if (setup.wValue==1){ writeZLP(); return; }
-	}
+    }
   }
   
   switch (setup.bRequest.request){
@@ -278,8 +262,8 @@ void usbDev::deviceEndpoint::dataRecieved(uint16_t nBytes){
       }
       if (setup.descriptor==usbDescriptorTypes::configuration){
         descLen=0;
-        m_device->configDescriptor(descBuffer, &descLen);
-        write(descBuffer, descLen, setup.wLength);
+        m_device->configDescriptor(inBuffer, &descLen);
+        write(inBuffer, descLen, setup.wLength);
       }
       if (setup.descriptor==usbDescriptorTypes::deviceQualifier){
         write((uint8_t*)&m_device->ud_qualifier, m_device->ud_qualifier.bLength, setup.wLength);
@@ -289,8 +273,8 @@ void usbDev::deviceEndpoint::dataRecieved(uint16_t nBytes){
         if (setup.descriptorIndex==0){
           write((uint8_t*)&m_device->ud_languageList, m_device->ud_languageList.bLength, setup.wLength);
         }else{
-          m_device->ud_stringDescriptors[setup.descriptorIndex-1].writeDescriptor(descBuffer, &descLen);
-          write(descBuffer, descLen, setup.wLength);
+          m_device->ud_stringDescriptors[setup.descriptorIndex-1].writeDescriptor(inBuffer, &descLen);
+          write(inBuffer, descLen, setup.wLength);
         }
       }
       break;

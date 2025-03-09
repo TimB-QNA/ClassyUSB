@@ -31,6 +31,7 @@ class usbDev
 {
   friend class usbEndpoint;
   friend class usbComponent;
+  friend class usbInterface;
   
   private:
     class deviceEndpoint : public usbEndpoint{
@@ -42,9 +43,9 @@ class usbDev
 
         deviceEndpoint(usbDev* usbDevice);
         void dataRecieved(uint16_t nBytes);
-		
-	  private:
-	    usbDev *m_device;
+        
+      private:
+        usbDev *m_device;
     };
 
     friend class deviceEndpoint;
@@ -148,7 +149,7 @@ class usbDev
     usbDev::deviceQualifier    ud_qualifier;
     usbDev::languageDescriptor ud_languageList;
     usbDev::stringDescriptor   ud_stringDescriptors[USB_MAX_STRINGDESCRIPTORS];
-	
+    
     uint8_t nInterfaces;
     uint8_t nComponents;
     usbComponent *ud_component[USB_MAX_COMPONENTS];
@@ -156,7 +157,6 @@ class usbDev
     uint8_t  m_iConfiguration;
    
     bool addComponentEndpoints(usbComponent *component);
-	bool addComponentEndpoints(usbSubComponent *component);
     bool addEndpoint(usbEndpoint *ep);
 
     void    populateDescriptor();
@@ -174,7 +174,7 @@ class usbDev
     virtual bool addEndpointToHardware(uint8_t idx, usbEndpoint *ep)=0;
 
     // Endpoint buffers
-	virtual bool allocateEndpointBuffer(uint8_t **buffer, uint16_t bufferSize)=0;
+    virtual bool allocateEndpointBuffer(uint8_t **buffer, uint16_t bufferSize)=0;
 
     // Hardware operation
     virtual void hardwareExec(uint64_t millis)=0;
