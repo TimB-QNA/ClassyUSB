@@ -35,9 +35,9 @@ void samd21usbDevice::interruptHandler(){
   if (USB->DEVICE.INTFLAG.bit.EORST==1){
     // End of reset
     USB->DEVICE.INTFLAG.bit.EORST=1;
-	for (i=0;i<maxHardwareEndpoints;i++){
-	  if (epMgt[i]!=nullptr) epMgt[i]->configure();
-	}
+    for (i=0;i<maxHardwareEndpoints;i++){
+      if (epMgt[i]!=nullptr) epMgt[i]->configure();
+    }
 
     USB->DEVICE.DeviceEndpoint[0].EPINTENSET.bit.RXSTP=1;  // Interrupt on setup packet
   }
@@ -48,7 +48,7 @@ void samd21usbDevice::interruptHandler(){
 */
 
   for (i=0;i<maxHardwareEndpoints;i++){
-	if (epMgt==nullptr) continue;
+    if (epMgt==nullptr) continue;
     if (USB->DEVICE.DeviceEndpoint[i].EPINTFLAG.bit.RXSTP==1){
       epMgt[i]->interrupt(usbHardwareEndpoint::interruptType::dataRx, hwEp[i].out.PCKSIZE.bit.BYTE_COUNT); // OUT (from host) transaction
       USB->DEVICE.DeviceEndpoint[i].EPSTATUSCLR.bit.BK0RDY = 1;
@@ -71,12 +71,12 @@ bool samd21usbDevice::addEndpointToHardware(uint8_t idx, usbEndpoint *ep){
   uint8_t i;
   
   for (i=0;i<maxHardwareEndpoints;i++){
-	if (epMgt[i]==nullptr){
+    if (epMgt[i]==nullptr){
       epMgt[i]=new samD21usbEndpoint(ep, i);
       epMgt[i]->configure();
-	  ep->setHardwareEndpoint(i, epMgt[i]);
-	  return true; 
-	}
+      ep->setHardwareEndpoint(i, epMgt[i]);
+      return true; 
+    }
   }
 
   return false;
@@ -141,12 +141,12 @@ void samd21usbDevice::configurePins(){
 
   uint32_t pad_transn
            = (*((uint32_t *)(NVMCTRL_OTP4) + (NVM_USB_PAD_TRANSN_POS / 32)) >> (NVM_USB_PAD_TRANSN_POS % 32))
-	     & ((1 << NVM_USB_PAD_TRANSN_SIZE) - 1);
+         & ((1 << NVM_USB_PAD_TRANSN_SIZE) - 1);
   uint32_t pad_transp
-	    = (*((uint32_t *)(NVMCTRL_OTP4) + (NVM_USB_PAD_TRANSP_POS / 32)) >> (NVM_USB_PAD_TRANSP_POS % 32))
-	      & ((1 << NVM_USB_PAD_TRANSP_SIZE) - 1);
+        = (*((uint32_t *)(NVMCTRL_OTP4) + (NVM_USB_PAD_TRANSP_POS / 32)) >> (NVM_USB_PAD_TRANSP_POS % 32))
+          & ((1 << NVM_USB_PAD_TRANSP_SIZE) - 1);
   uint32_t pad_trim = (*((uint32_t *)(NVMCTRL_OTP4) + (NVM_USB_PAD_TRIM_POS / 32)) >> (NVM_USB_PAD_TRIM_POS % 32))
-	              & ((1 << NVM_USB_PAD_TRIM_SIZE) - 1);
+                  & ((1 << NVM_USB_PAD_TRIM_SIZE) - 1);
 
   if (pad_transn == 0x1F) pad_transn = 5;
   if (pad_transp == 0x1F) pad_transp = 29;
@@ -217,9 +217,9 @@ void samd21usbDevice::setMode(usbModeTypes mode){
 }
 
 bool samd21usbDevice::allocateEndpointBuffer(uint8_t **buffer, uint16_t bufferSize){
-	*buffer = new uint8_t[bufferSize];
-	memset(*buffer, 0, bufferSize);
-	return true;
+    *buffer = new uint8_t[bufferSize];
+    memset(*buffer, 0, bufferSize);
+    return true;
 }
 
 
@@ -234,14 +234,14 @@ samD21usbEndpoint::samD21usbEndpoint(usbEndpoint *parent, uint8_t epIdx) : usbHa
 
 uint8_t samD21usbEndpoint::sizeCode(usbEndpoint::endpointSize sz){
   switch(sz){
-	case usbEndpoint::endpointSize::b8:    return 0x00;
-	case usbEndpoint::endpointSize::b16:   return 0x01;
-	case usbEndpoint::endpointSize::b32:   return 0x02;
-	case usbEndpoint::endpointSize::b64:   return 0x03;
-	case usbEndpoint::endpointSize::b128:  return 0x04;
-	case usbEndpoint::endpointSize::b256:  return 0x05;
-	case usbEndpoint::endpointSize::b512:  return 0x06;
-	case usbEndpoint::endpointSize::b1023: return 0x07;
+    case usbEndpoint::endpointSize::b8:    return 0x00;
+    case usbEndpoint::endpointSize::b16:   return 0x01;
+    case usbEndpoint::endpointSize::b32:   return 0x02;
+    case usbEndpoint::endpointSize::b64:   return 0x03;
+    case usbEndpoint::endpointSize::b128:  return 0x04;
+    case usbEndpoint::endpointSize::b256:  return 0x05;
+    case usbEndpoint::endpointSize::b512:  return 0x06;
+    case usbEndpoint::endpointSize::b1023: return 0x07;
   };
   return 0x00;
 }
@@ -249,10 +249,10 @@ uint8_t samD21usbEndpoint::sizeCode(usbEndpoint::endpointSize sz){
 uint8_t samD21usbEndpoint::typeCode(usbEndpoint::endpointType type){
   switch(type){
     case usbEndpoint::endpointType::control:    return 0x01;
-	case usbEndpoint::endpointType::isochronos: return 0x02;
-	case usbEndpoint::endpointType::bulk:       return 0x03;
-	case usbEndpoint::endpointType::interrupt:  return 0x04;
-	case usbEndpoint::endpointType::dual:       return 0x05;
+    case usbEndpoint::endpointType::isochronos: return 0x02;
+    case usbEndpoint::endpointType::bulk:       return 0x03;
+    case usbEndpoint::endpointType::interrupt:  return 0x04;
+    case usbEndpoint::endpointType::dual:       return 0x05;
   }
   return 0x00;
 }
@@ -281,7 +281,7 @@ void samD21usbEndpoint::readComplete(){
 }
 
 uint16_t samD21usbEndpoint::write(uint8_t *data, uint16_t nBytes){
-  if (nBytes>0) memcpy(m_parent->inBuffer, data, nBytes);
+  if (data!=nullptr && nBytes>0) memcpy(m_parent->inBuffer, data, nBytes);
    
   in->PCKSIZE.bit.BYTE_COUNT=nBytes;
   in->PCKSIZE.bit.MULTI_PACKET_SIZE=0;
