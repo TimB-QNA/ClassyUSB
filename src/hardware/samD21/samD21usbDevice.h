@@ -18,22 +18,22 @@ extern "C" void USB_Handler();
 
 class samD21usbEndpoint : public usbHardwareEndpoint
 {
-	public:
-	samD21usbEndpoint(usbEndpoint *parent, uint8_t epIdx);
-	uint8_t sizeCode(usbEndpoint::endpointSize sz);
-	uint8_t typeCode(usbEndpoint::endpointType type);
-	void configure();
+    public:
+    samD21usbEndpoint(usbEndpoint *parent, uint8_t epIdx);
+    uint8_t sizeCode(usbEndpoint::endpointSize sz);
+    uint8_t typeCode(usbEndpoint::endpointType type);
+    void configure();
 
-	uint16_t write(uint8_t *data, uint16_t nBytes);
-	void writeZLP();
-	void writeStall();
-		
-	void readComplete();
-	
-	private:
-	UsbDeviceEndpoint  *ep=nullptr;
-	UsbDeviceDescBank  *out=nullptr;
-	UsbDeviceDescBank  *in=nullptr;
+    uint16_t write(uint8_t *data, uint16_t nBytes);
+    void writeZLP();
+    void writeStall();
+        
+    void readComplete();
+    
+    private:
+    UsbDeviceEndpoint  *ep=nullptr;
+    UsbDeviceDescBank  *out=nullptr;
+    UsbDeviceDescBank  *in=nullptr;
 };
 
 
@@ -54,7 +54,7 @@ class samd21usbDevice : public usbDev
 
     // Endpoint buffers
     bool allocateEndpointBuffer(uint8_t **buffer, uint16_t bufferSize);
-	
+    
   private:
     void configureClock();
     void configurePins();

@@ -13,16 +13,16 @@ class usbSetupPacket{
 
     struct{
       uint8_t     data;
-	  rqDir       dir;
-	  rqType      type;
-	  rqRecipient recipient;
-	}bmRequestType;
-	
+      rqDir       dir;
+      rqType      type;
+      rqRecipient recipient;
+    }bmRequestType;
+    
     struct{
       uint8_t  data;
       usbStandardRequestCode request;
     }bRequest;
-	
+    
     uint16_t wValue;
     
     usbDescriptorTypes descriptor;
@@ -32,7 +32,7 @@ class usbSetupPacket{
     uint16_t wLength;
     
     usbSetupPacket(uint8_t *data);
-	uint8_t rawData[8];
+    uint8_t rawData[8];
 };
 
 #endif /* USBSETUPPACKET_H_ */
