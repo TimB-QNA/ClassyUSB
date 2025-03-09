@@ -11,10 +11,10 @@ usbHardwareEndpoint::usbHardwareEndpoint(usbEndpoint *parent){
  */
 void usbHardwareEndpoint::interrupt(usbHardwareEndpoint::interruptType info, uint16_t msg){
   switch(info){
-	case interruptType::dataRx: m_parent->dataRecieved(msg);
+    case interruptType::dataRx: m_parent->dataRecieved(msg);
   }
 }
-	
+    
 usbEndpoint::usbEndpoint(uint16_t bufferSz, usbEndpoint::endpointSize sz, usbEndpoint::endpointDirection uDir, usbEndpoint::endpointType uType){
   bufferSize=bufferSz;
   size=sz;
@@ -65,9 +65,9 @@ void usbEndpoint::initialise(usbDev *usbHardware){
   /// ToDo: Handle Isochronos configuration of bmAttributes bits 2 to 5.
 
   descriptor.wMaxPacketSize   = (uint16_t)size & 0x07FF;        // Maximum packet size
-  descriptor.bInterval        = 10;                             // Interval between packets
+  descriptor.bInterval        = 255;                            // Interval between packets
 }
-	
+    
 void usbEndpoint::setHardwareEndpoint(uint8_t address, usbHardwareEndpoint *hwEp){
   m_endpointNumber=address;
   descriptor.bEndpointAddress=address & 0x0F; // Update descriptor at same time
@@ -78,7 +78,7 @@ uint8_t usbEndpoint::hardwareEndpoint(){
   return m_endpointNumber;
 }
 
-void usbEndpoint::dataRecieved(uint16_t nBytes){		
+void usbEndpoint::dataRecieved(uint16_t nBytes){        
 }
 
 uint16_t usbEndpoint::write(uint8_t *data, uint16_t nBytes, uint16_t maxLength){
