@@ -11,47 +11,51 @@
 
 #include <stdint.h>
 #include "../core/usbComponent.h"
-#include "../core/usbSubComponent.h"
-
-/*! The usbSubCDC class is just a wrapper around usbSubComponent.
- *  It restricts which object types can be compiled into a USB
- *  Component without a compiler error.
- */
-class usbSubCDC : public usbSubComponent
-{
-  public:
-    usbSubCDC(uint8_t subclassCode=0x00, uint8_t protocolCode=0x00);
-};
 
 class usbCDC : public usbComponent
 {
   public:
-    enum class descriptorTypes      : uint16_t { cs_interface = 0x24, cs_endpoint = 0x25 };
+    enum class subclassCodes        : uint8_t  { reserved                   = 0x00,
+                                                 directLineControlModel     = 0x01,
+                                                 abstractControlModel       = 0x02,
+                                                 telephoneControlModel      = 0x03,
+                                                 multichannelControlModel   = 0x04,
+                                                 capiControlModel           = 0x05,
+                                                 ethernetNetworking         = 0x06,
+                                                 atmControlModel            = 0x07,
+                                                 wirelessHandset            = 0x08,
+                                                 deviceManagement           = 0x09,
+                                                 mobileDirectLine           = 0x0A,
+                                                 obex                       = 0x0B };
+                                                 
+    enum class descriptorTypes      : uint16_t { cs_interface               = 0x24,
+                                                 cs_endpoint                = 0x25 };
 
-    enum class descriptorSubTypes      : uint16_t { headerFunctionalDescriptor = 0x00,
-		                                            callManagement             = 0x01,
-													acmFunctional              = 0x02,
-													directLineManagement       = 0x03,
-													phoneRinger                = 0x04,
-													phoneCallAndState          = 0x05,
-													unionFunctional            = 0x06,
-													countrySelection           = 0x07,
-													phoneOpModes               = 0x08,
-													usbTerminal                = 0x09,
-													netChanTerminal            = 0x0A,
-													protocolUnit               = 0x0B,
-													extensionUnit              = 0x0C,
-													multichanManagement        = 0x0D,
-													capiControlManagement      = 0x0E,
-													ethernetFunctional         = 0x0F,
-													atmNetworking              = 0x10,
-													wirelessHandsetControl     = 0x11 };
+    enum class descriptorSubTypes   : uint16_t { headerFunctionalDescriptor = 0x00,
+                                                 callManagement             = 0x01,
+                                                 acmFunctional              = 0x02,
+                                                 directLineManagement       = 0x03,
+                                                 phoneRinger                = 0x04,
+                                                 phoneCallAndState          = 0x05,
+                                                 unionFunctional            = 0x06,
+                                                 countrySelection           = 0x07,
+                                                 phoneOpModes               = 0x08,
+                                                 usbTerminal                = 0x09,
+                                                 netChanTerminal            = 0x0A,
+                                                 protocolUnit               = 0x0B,
+                                                 extensionUnit              = 0x0C,
+                                                 multichanManagement        = 0x0D,
+                                                 capiControlManagement      = 0x0E,
+                                                 ethernetFunctional         = 0x0F,
+                                                 atmNetworking              = 0x10,
+                                                 wirelessHandsetControl     = 0x11 };
+    #pragma pack(push, 1)
     typedef struct{
-	  uint8_t  bFunctionLength;
-	  uint8_t  bDescriptorType;
-	  uint8_t  bDescriptorSubtype;
-	  uint8_t  bmCapabilities;
-	  uint8_t  bDataInterface;
+      uint8_t  bFunctionLength;
+      uint8_t  bDescriptorType;
+      uint8_t  bDescriptorSubtype;
+      uint8_t  bmCapabilities;
+      uint8_t  bDataInterface;
     }capabilityDescriptor;
 
     typedef struct{
@@ -60,28 +64,32 @@ class usbCDC : public usbComponent
       uint8_t  bDescriptorSubtype;
       uint8_t  bFnData[6];
     }functionalDescriptor;
-		
+
+    typedef struct{
+      uint8_t  bFunctionLength;
+      uint8_t  bDescriptorType;
+      uint8_t  bDescriptorSubtype;
+      uint16_t bcdCDC;
+    }headerDescriptor;
+    #pragma pack(pop)
+            
   private:
     class cdcEndpoint : public usbEndpoint{
       public:
-      cdcEndpoint(usbCDC *p, uint16_t bSize, usbEndpoint::endpointSize sz, usbEndpoint::endpointDirection uDir, usbEndpoint::endpointType uType);
-      void dataRecieved(uint16_t nBytes);
+        cdcEndpoint(usbCDC *p, uint16_t bSize, usbEndpoint::endpointSize sz, usbEndpoint::endpointDirection uDir, usbEndpoint::endpointType uType);
+        void dataRecieved(uint16_t nBytes);
 
       private:
-      usbCDC *parent;
+        usbCDC *parent;
     };
 
     friend class cdcAcmEndpoint;
 
   public:
-    usbCDC(usbSubCDC *subclass, const char* name="CDC");
+    usbCDC(const char* name="CDC");
 
   protected:
-    usbEndpoint                        *ctrlEndpoint;
-
-    void initComponent();
-
-    void bufferFunctionalDescriptor(uint8_t *buffer, uint16_t *len);
+    usbEndpoint *ctrlEndpoint;
 };
 
 #endif /* USBCDC_H_ */

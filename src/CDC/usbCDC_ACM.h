@@ -6,11 +6,12 @@
  */ 
 
 #include "usbCDC.h"
+#include "../core/usbInterface.h"
 
 #ifndef USBCDC_ACM_H_
 #define USBCDC_ACM_H_
 
-class usbCDC_ACM : public usbSubCDC
+class usbCDC_ACM : public usbCDC
 {
   friend class usbCDC;
   
@@ -22,6 +23,20 @@ class usbCDC_ACM : public usbSubCDC
 
       private:
         usbCDC_ACM *parent;
+    };
+    
+    class cdcMainInterface : public usbInterface{
+      public:
+        cdcMainInterface();
+        usbInterface *dataInterface;
+
+      protected:  
+        void preEndpointDescriptor(uint8_t *buffer, uint16_t *len);
+    };
+
+    class cdcDataInterface : public usbInterface{
+      public:
+        cdcDataInterface();
     };
 
   friend class cdcAcmEndpoint;
@@ -36,15 +51,17 @@ class usbCDC_ACM : public usbSubCDC
 
     usbCDC_ACM();
 
+    uint16_t write(uint8_t *data, uint16_t nBytes);
+
   protected:
     void initComponent();
     managementDescriptor acm_mgtDesc;
 
+    cdcMainInterface           m_mainIface;
+    cdcDataInterface           m_dataIface;
     usbCDC_ACM::cdcAcmEndpoint *dInEp;
     usbCDC_ACM::cdcAcmEndpoint *dOutEp;
-
-    void bufferFunctionalDescriptor(uint8_t *buffer, uint16_t *len);
-
+    usbCDC_ACM::cdcAcmEndpoint *ctrlEp;
 };
 
 #endif /* USBCDC_ACM_H_ */
