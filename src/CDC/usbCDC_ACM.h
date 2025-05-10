@@ -10,7 +10,7 @@
 
 #include "usbCDC.h"
 #include "../core/usbInterface.h"
-#include "../utils/ringBuffer.h"
+#include "../utils/usbRingBuffer.h"
 #include <stdio.h>
 
 class usbCDC_ACM : public usbCDC
@@ -74,8 +74,8 @@ class usbCDC_ACM : public usbCDC
     usbCDC_ACM::cdcAcmEndpoint *dOutEp;
     usbCDC_ACM::cdcAcmEndpoint *ctrlEp;
 
-    ringBuffer rxBuffer;
-    ringBuffer txBuffer;
+    usbRingBuffer rxBuffer;
+    usbRingBuffer txBuffer;
 };
 
 #endif /* USBCDC_ACM_H_ */

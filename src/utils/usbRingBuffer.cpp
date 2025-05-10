@@ -1,38 +1,38 @@
-#include "ringBuffer.h"
+#include "usbRingBuffer.h"
 #include <string.h>
 
-ringBuffer::ringBuffer(){
+usbRingBuffer::usbRingBuffer(){
   m_buffer=nullptr;
   m_bufferSize=0;
   clear();
 }
 
-ringBuffer::ringBuffer(uint8_t *buffer, uint16_t buffSize){
-  ringBuffer();
+usbRingBuffer::usbRingBuffer(uint8_t *buffer, uint16_t buffSize){
+  usbRingBuffer();
   init(buffer, buffSize);
 }
 
-void ringBuffer::clear(){
+void usbRingBuffer::clear(){
   m_head=0;
   m_tail=0;
 }
 
-bool ringBuffer::init(uint8_t *buffer, uint16_t buffSize){
+bool usbRingBuffer::init(uint8_t *buffer, uint16_t buffSize){
   m_buffer = buffer;
   m_bufferSize=buffSize;
   clear();
   return true;
 }  
   
-bool ringBuffer::isEmpty(){
+bool usbRingBuffer::isEmpty(){
   return m_head == m_tail;
 }
 
-bool ringBuffer::isFull(){
+bool usbRingBuffer::isFull(){
   return ((m_head + 1) % m_bufferSize) == m_tail;
 }  
   
-bool ringBuffer::enqueue(uint8_t data){
+bool usbRingBuffer::enqueue(uint8_t data){
   if (m_buffer==nullptr) return false;
   
   if (isFull()){
@@ -46,7 +46,7 @@ bool ringBuffer::enqueue(uint8_t data){
   return true;
 }
     
-uint8_t ringBuffer::dequeue(bool *ok){
+uint8_t usbRingBuffer::dequeue(bool *ok){
   uint8_t data;
   
   if (ok!=nullptr) *ok=false;
@@ -62,7 +62,7 @@ uint8_t ringBuffer::dequeue(bool *ok){
   return data;
 }
 
-uint16_t ringBuffer::enqueueBlock(uint8_t *data, uint16_t nBytes){
+uint16_t usbRingBuffer::enqueueBlock(uint8_t *data, uint16_t nBytes){
   uint16_t i;
 
   for (i=0;i<nBytes;i++) enqueue(data[i]);
@@ -70,7 +70,7 @@ uint16_t ringBuffer::enqueueBlock(uint8_t *data, uint16_t nBytes){
   return nBytes;
 }
 
-uint16_t ringBuffer::dequeueBlock(uint8_t *data, uint16_t maxSize){
+uint16_t usbRingBuffer::dequeueBlock(uint8_t *data, uint16_t maxSize){
   bool ok;
   uint8_t d;
   uint16_t i, s;

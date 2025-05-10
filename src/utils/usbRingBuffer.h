@@ -1,20 +1,13 @@
-/*
- * ringBuffer.h
- *
- * Created: 09/03/2025 18:36:15
- *  Author: Tim
- */ 
-
-#ifndef RINGBUFFER_H_
-#define RINGBUFFER_H_
+#ifndef USBRINGBUFFER_H_
+#define USBRINGBUFFER_H_
 
 #include <stdint.h>
 
-class ringBuffer  
+class usbRingBuffer  
 {
   public:
-    ringBuffer();
-    ringBuffer(uint8_t *buffer, uint16_t buffSize);
+    usbRingBuffer();
+    usbRingBuffer(uint8_t *buffer, uint16_t buffSize);
     
     void clear();
     
