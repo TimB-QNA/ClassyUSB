@@ -263,7 +263,7 @@ void usbDev::deviceEndpoint::dataRecieved(uint16_t nBytes){
       if (setup.descriptor==usbDescriptorTypes::configuration){
         descLen=0;
         m_device->configDescriptor(inBuffer, &descLen);
-        write(inBuffer, descLen, setup.wLength);
+        write(nullptr, descLen, setup.wLength);
       }
       if (setup.descriptor==usbDescriptorTypes::deviceQualifier){
         write((uint8_t*)&m_device->ud_qualifier, m_device->ud_qualifier.bLength, setup.wLength);
@@ -274,7 +274,7 @@ void usbDev::deviceEndpoint::dataRecieved(uint16_t nBytes){
           write((uint8_t*)&m_device->ud_languageList, m_device->ud_languageList.bLength, setup.wLength);
         }else{
           m_device->ud_stringDescriptors[setup.descriptorIndex-1].writeDescriptor(inBuffer, &descLen);
-          write(inBuffer, descLen, setup.wLength);
+          write(nullptr, descLen, setup.wLength);
         }
       }
       break;

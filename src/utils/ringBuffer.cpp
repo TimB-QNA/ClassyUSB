@@ -1,4 +1,5 @@
 #include "ringBuffer.h"
+#include <string.h>
 
 ringBuffer::ringBuffer(){
   m_buffer=nullptr;
@@ -61,25 +62,43 @@ uint8_t ringBuffer::dequeue(bool *ok){
   return data;
 }
 
-void ringBuffer::enqueueBlock(uint8_t *data, uint16_t nBytes){
+uint16_t ringBuffer::enqueueBlock(uint8_t *data, uint16_t nBytes){
   uint16_t i;
 
   for (i=0;i<nBytes;i++) enqueue(data[i]);
+
+  return nBytes;
 }
 
 uint16_t ringBuffer::dequeueBlock(uint8_t *data, uint16_t maxSize){
   bool ok;
   uint8_t d;
-  uint16_t i;
+  uint16_t i, s;
   
-  for (i=0;i<maxSize;i++){
-    d=dequeue(&ok);
-    if (ok){
-      data[i]=d;
-    }else{
-      return i;
-    }
+  // Easiest condition, no data, return nothing...
+  if (m_tail==m_head) return 0;
+
+  // Easy condition, tail less than head so buffer is effectively a contiguous linear buffer.
+  if (m_tail<m_head){
+    i=m_head-m_tail;                  // Amount of data in buffer
+    if (i>maxSize) i=maxSize;         // Limit to required size
+    memcpy(data, m_buffer+m_tail, i); // Copy data
+    m_tail+=i;                        // Update tail position.
+    return i;
   }
 
-  return maxSize;
+  // At this point, tail is greater than head so we need to copy the top end of the array, then the bottom.
+  i=m_bufferSize-m_tail;
+  if (i>maxSize) i=maxSize;
+  memcpy(data, m_buffer+m_tail, i);
+  m_tail = (m_tail + i) % m_bufferSize;
+
+  s=i;
+  i=m_head;
+  if (s+i>maxSize) i=maxSize-s;
+  if (i==0) return i;
+  memcpy(data+s, m_buffer, i);
+  m_tail = i;
+  
+  return s+i;
 }

@@ -2,12 +2,30 @@
 #include "usbCDC.h"
 #include <string.h>
 
+int writeCdcAcm(void *cookie, const char *buf, int n){
+  usbCDC_ACM *support=(usbCDC_ACM*)cookie;
+  return support->write((uint8_t*)buf, n);
+}
+
+int readCdcAcm(void *cookie, char *buf, int n){
+  usbCDC_ACM *support=(usbCDC_ACM*)cookie;
+  int rc;
+  rc=support->rxBuffer.dequeueBlock((uint8_t*)buf, n);
+  if (rc==0){
+    buf[0]=EOF;
+    return EOF;
+  }
+  return rc;
+}
+
 usbCDC_ACM::usbCDC_ACM(uint8_t *txBuffSpace, uint16_t txSize, uint8_t *rxBuffSpace, uint16_t rxSize) : usbCDC("CDC_ACM")
 {
   ctrlEp = new usbCDC_ACM::cdcAcmEndpoint(this, usbCDC_ACM::cdcAcmEndpoint::opMode::alert,    64, usbEndpoint::endpointSize::b64, usbEndpoint::endpointDirection::in,  usbEndpoint::endpointType::interrupt);
   dInEp  = new usbCDC_ACM::cdcAcmEndpoint(this, usbCDC_ACM::cdcAcmEndpoint::opMode::transmit, 64, usbEndpoint::endpointSize::b64, usbEndpoint::endpointDirection::in,  usbEndpoint::endpointType::bulk);
   dOutEp = new usbCDC_ACM::cdcAcmEndpoint(this, usbCDC_ACM::cdcAcmEndpoint::opMode::receive,  64, usbEndpoint::endpointSize::b64, usbEndpoint::endpointDirection::out, usbEndpoint::endpointType::bulk);   
-    
+   
+  dInEp->async=false;
+
   m_mainIface.addEndpoint(ctrlEp);
   m_dataIface.addEndpoint(dInEp);
   m_dataIface.addEndpoint(dOutEp);
@@ -18,6 +36,9 @@ usbCDC_ACM::usbCDC_ACM(uint8_t *txBuffSpace, uint16_t txSize, uint8_t *rxBuffSpa
 
   rxBuffer.init(rxBuffSpace, rxSize);
   txBuffer.init(txBuffSpace, txSize);
+
+  stream = funopen(this, readCdcAcm, writeCdcAcm, NULL, NULL);
+  setbuf(stream, nullptr);
 }
 
 void usbCDC_ACM::initComponent(){
@@ -25,10 +46,10 @@ void usbCDC_ACM::initComponent(){
 }
 
 uint16_t usbCDC_ACM::write(uint8_t *data, uint16_t nBytes){
-  uint16_t i;
   uint16_t nb=0;
 
-  for (i=0;i<nBytes;i++) txBuffer.enqueue(data[i]);
+  txBuffer.enqueueBlock(data, nBytes);
+
   if (!dInEp->isWriting()){
     nb=txBuffer.dequeueBlock(dInEp->inBuffer, dInEp->bufferSize);
     dInEp->write(nullptr, nb);
@@ -54,11 +75,10 @@ void usbCDC_ACM::cdcAcmEndpoint::dataRecieved(uint16_t nBytes){
 
 void usbCDC_ACM::cdcAcmEndpoint::transmitComplete(){
   uint16_t nb=0;
-
   if (m_mode==usbCDC_ACM::cdcAcmEndpoint::opMode::transmit){
     // Write data from tx buffer to endpoint if applicable
-//    nb=parent->txBuffer.dequeueBlock(inBuffer, bufferSize);
-//    write(nullptr, nb);
+    nb=parent->txBuffer.dequeueBlock(inBuffer, bufferSize);
+    if (nb>0) write(nullptr, nb);
   }
 }
 

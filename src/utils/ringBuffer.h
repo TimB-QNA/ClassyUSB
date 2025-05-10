@@ -26,7 +26,7 @@ class ringBuffer
     bool    enqueue(uint8_t data);
     uint8_t dequeue(bool *ok=nullptr);
 
-    void     enqueueBlock(uint8_t *data, uint16_t nBytes);
+    uint16_t enqueueBlock(uint8_t *data, uint16_t nBytes);
     uint16_t dequeueBlock(uint8_t *data, uint16_t maxSize);
     
   private:

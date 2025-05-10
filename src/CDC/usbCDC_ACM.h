@@ -11,11 +11,14 @@
 #include "usbCDC.h"
 #include "../core/usbInterface.h"
 #include "../utils/ringBuffer.h"
+#include <stdio.h>
 
 class usbCDC_ACM : public usbCDC
 {
   friend class usbCDC;
-  
+  friend int writeCdcAcm(void *cookie, const char *buf, int n);
+  friend int readCdcAcm(void *cookie, char *buf, int n);
+
   private:
     class cdcAcmEndpoint : public usbEndpoint{
       public:
@@ -48,6 +51,13 @@ class usbCDC_ACM : public usbCDC
   friend class cdcAcmEndpoint;
 
   public:
+    usbCDC_ACM(uint8_t *txBuffSpace, uint16_t txSize, uint8_t *rxBuffSpace, uint16_t rxSize);
+
+    uint16_t write(uint8_t *data, uint16_t nBytes);
+
+    FILE *stream;
+
+  protected:
     typedef struct{
       uint8_t  bFunctionLength;
       uint8_t  bDescriptorType;
@@ -55,11 +65,6 @@ class usbCDC_ACM : public usbCDC
       uint8_t  bmCapabilities;
     }managementDescriptor;
 
-    usbCDC_ACM(uint8_t *txBuffSpace, uint16_t txSize, uint8_t *rxBuffSpace, uint16_t rxSize);
-
-    uint16_t write(uint8_t *data, uint16_t nBytes);
-
-  protected:
     void initComponent();
     managementDescriptor acm_mgtDesc;
 

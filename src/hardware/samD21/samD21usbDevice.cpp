@@ -23,7 +23,6 @@ extern "C" {
 void samd21usbDevice::interruptHandler(){
   // USB Interrupt handler
   uint8_t i;
-
 /*
   if (USB->DEVICE.INTFLAG.bit.LPMSUSP=1) ; // Link power management suspend
   if (USB->DEVICE.INTFLAG.bit.LPMNYET=1) ; // Link power management not yet
@@ -44,11 +43,11 @@ void samd21usbDevice::interruptHandler(){
 /*
   if (USB->DEVICE.INTFLAG.bit.SOF=1) ;     // Start of frame
   if (USB->DEVICE.INTFLAG.bit.MSOF=1) ;    // Micro start of frame
-  if (USB->DEVICE.INTFLAG.bit.SUSPEND=1) ; // Suspend
+  if (USB->DEVICE.INTFLAG.bit.SUSPEND=1) ;
 */
 
   for (i=0;i<maxHardwareEndpoints;i++){
-    if (epMgt==nullptr) continue;
+    if (epMgt[i]==nullptr) continue;
     if (USB->DEVICE.DeviceEndpoint[i].EPINTFLAG.bit.RXSTP==1){
       epMgt[i]->interrupt(usbHardwareEndpoint::interruptType::dataRx, hwEp[i].out.PCKSIZE.bit.BYTE_COUNT); // OUT (from host) transaction
       USB->DEVICE.DeviceEndpoint[i].EPSTATUSCLR.bit.BK0RDY = 1;
@@ -57,7 +56,10 @@ void samd21usbDevice::interruptHandler(){
       epMgt[i]->interrupt(usbHardwareEndpoint::interruptType::dataRx, hwEp[i].out.PCKSIZE.bit.BYTE_COUNT); // OUT (from host) transaction
       USB->DEVICE.DeviceEndpoint[i].EPSTATUSCLR.bit.BK0RDY = 1;
     }
-    if (USB->DEVICE.DeviceEndpoint[i].EPINTFLAG.bit.TRCPT1==1) epMgt[i]->interrupt(usbHardwareEndpoint::interruptType::dataTx, 0); // IN (to host) transaction
+    if (USB->DEVICE.DeviceEndpoint[i].EPINTFLAG.bit.TRCPT1==1){
+      epMgt[i]->isWriting=false;
+      epMgt[i]->interrupt(usbHardwareEndpoint::interruptType::dataTx, 0); // IN (to host) transaction
+    }
     USB->DEVICE.DeviceEndpoint[i].EPINTFLAG.reg=0xFF;
   }
 
@@ -275,6 +277,8 @@ void samD21usbEndpoint::configure(){
   
   in->PCKSIZE.bit.SIZE=sizeCode(m_parent->size);
   in->ADDR.reg=(uint32_t)m_parent->inBuffer;
+
+  isWriting=false;
 }
 
 void samD21usbEndpoint::readComplete(){
