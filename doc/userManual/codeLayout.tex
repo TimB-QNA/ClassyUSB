@@ -9,11 +9,16 @@ The library treats every configuration as a composite device. In USB parlance, a
 For example, serial over usb (CDC\_ACM) on an Atmel SAMD21 might be configured thus:
 
 \begin{verbatim}
-#include "ClassyUSB/src/hardware/samd21usbDevice.h"
+#include "ClassyUSB/src/hardware/samD21/samd21usbDevice.h"
 #include "ClassyUSB/src/CDC/usbCDC_ACM.h"
 
+#define ACMTXSIZE 128
+#define ACMRXSIZE 64
+uint8_t acmTxBuffer[ACMTXSIZE];
+uint8_t acmRxBuffer[ACMRXSIZE];
+
 samd21usbDevice usb;
-usbCDC_ACM acm;
+usbCDC_ACM acm(acmTxBuffer, ACMTXSIZE, acmRxBuffer, ACMRXSIZE);
 
 int main(){
   ...
@@ -21,7 +26,7 @@ int main(){
   usb.setProductID(0x2404);
 
   usb.initialise();
-  usb.addComponent( new usbCDC(&acm) );
+  usb.addComponent( &acm );
   ...
 }
 \end{verbatim}
